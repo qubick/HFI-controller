@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+		<head>
+				<meta charset="utf-8">
+				<title>Kinemaker</title>
+
+
+				<!-- p5.js for UI elements -->
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/p5.min.js"></script>
+		    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/addons/p5.dom.min.js"></script>
+		    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/addons/p5.sound.min.js"></script>
+
+				<!-- Latest compiled and minified CSS -->
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"></link>
+
+				<!-- jQuery library -->
+				<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+				<script type="javascript/text" src="server.js"></script>
+		</head>
+
+		<style>
+					#container {
+						position:relative;
+					}
+					#gallery {
+						position:fixed;
+						width:300px;
+						height:100%;
+						top:0;
+						left:0;
+						background-color: rgba(0,0,0);
+					}
+					#drop_zone {
+						border: 5px solid blue;
+						position:fixed;
+						width:400px;
+						height:200px;
+						top:0;
+						left:500px;
+					}
+					.box__dragndrop,
+					.box__uploading,
+					.box__success,
+					.box__error {
+					  display: none;
+					}
+				</style>
+
+		<body
+			<div id="container" left="100px" top="0px">
+				<script src="./build/three.js"></script>
+
+				<script src="./js/loaders/DDSLoader.js"></script>
+				<script src="./js/loaders/MTLLoader.js"></script>
+				<script src="./js/loaders/OBJLoader.js"></script>
+
+				<script src="./js/controls/OrbitControls.js"></script>
+				<script src="./js/libs/dat.gui.min.js"></script>
+				<script src="./js/libs/stats.min.js"></script>
+				<script src="./js/geometries/DecalGeometry.js"></script>
+				<script src="./js/controls/DragControls.js"></script>
+				<script src="./js/controls/TrackballControls.js"></script>
+
+				<!-- <script src="./environment_setting.js"></script>
+				<script src="./client_channel.js"></script> -->
+
+				<!-- gear libraries -->
+				<script src="./gears/cam.js"></script>
+
+
+				<script src="./editor.js"></script>
+				<!-- <script src="./gallery.js"></script> -->
+			</div>
+
+			<!-- #gearbox gallery -->
+			<!-- <div id="gallery">
+				<iframe src="https://craftml.io/embed/VJRbB" width="500" height="400" frameborder="0" ></iframe>
+				<!-- <iframe src="https://craftml.io/embed/VJlTc" width="500" height="400" frameborder="0" ></iframe> -->
+				<iframe src="https://craftml.io/embed/4JEfn" width="500" height="400" frameborder="0" ></iframe>
+			</div> -->
+
+
+			<!-- drag and drop file browser -->
+			<!-- <form class="box" method="post" action="" enctype="multipart/form-data">
+			  <div class="box__input">
+			    <input class="box__file" type="file" name="files[]" id="file" data-multiple-caption="{count} files selected" multiple />
+			    <label for="file"><strong>Choose a file</strong><span class="box__dragndrop"> or drag it here</span>.</label>
+			    <button class="box__button" type="submit">Upload</button>
+			  </div>
+			  <div class="box__uploading">Uploading&hellip;</div>
+			  <div class="box__success">Done!</div>
+			  <div class="box__error">Error! <span></span>.</div>
+			</form> -->
+
+
+			<!-- file saver -->
+			<script src="./js/minjs/FileSaver.min.js"></script>
+			<script src="./drop_handler.js"></script>
+			<div id="drop_zone" ondrop="drop_handler(event);" ondragover="dragover_handler(event);">
+			  <strong>Drag one or more files to this Drop Zone ...</strong>
+			</div>
+		</body>
+</html>
