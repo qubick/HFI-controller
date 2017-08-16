@@ -4,11 +4,13 @@ var container, stats;
 var camera, controls, scene, renderer;
 var objects = [];
 
+var stlModel;
+
 //1:jumper, 2:swing,
 //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
 //9:dfriction
 
-var gearType = 2
+var gearType = 9
 var gear;
 // var cam, crank, pusher; //etc
 var topUplimit;
@@ -24,7 +26,7 @@ function init() {
 
   container = document.createElement( 'div' );
   document.body.appendChild( container );
-  camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+  camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
   camera.position.z = 1000;
   controls = new THREE.TrackballControls( camera );
   controls.rotateSpeed = 1.0;
@@ -47,23 +49,19 @@ function init() {
   light.shadow.mapSize.height = 2048;
   scene.add( light );
 
-  var geometry = new THREE.BoxGeometry( 40, 40, 40 );
-  for ( var i = 0; i < 10; i ++ ) {
-  	var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
-  	object.position.x = Math.random() * 1000 - 500;
-  	object.position.y = Math.random() * 600 - 300;
-  	object.position.z = Math.random() * 800 - 400;
-  	object.rotation.x = Math.random() * 2 * Math.PI;
-  	object.rotation.y = Math.random() * 2 * Math.PI;
-  	object.rotation.z = Math.random() * 2 * Math.PI;
-  	object.scale.x = Math.random() * 2 + 1;
-  	object.scale.y = Math.random() * 2 + 1;
-  	object.scale.z = Math.random() * 2 + 1;
-  	object.castShadow = true;
-  	object.receiveShadow = true;
-  	scene.add( object );
-  	objects.push( object );
-  }
+
+  //Ground
+  var plane = new THREE.Mesh(
+    new THREE.PlaneBufferGeometry( 100, 100 ),
+    new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
+  );
+  plane.rotation.x = -Math.PI/2;
+  plane.position.y = -0.5;
+  scene.add( plane );
+
+  plane.receiveShadow = true;
+
+
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setClearColor( 0xf0f0f0 );
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -72,6 +70,13 @@ function init() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   container.appendChild( renderer.domElement );
+
+
+  // add models
+  loadSTLModel('./models/makefairbot.stl', 'ascii');
+
+
+  // add gears
 
   //1:jumper, 2:swing,
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
@@ -104,6 +109,13 @@ function init() {
     break;
 
     case 9: //double_friction
+      gear = new Gears(5);
+
+      gear.box.add(gear.top); //to group move by drag
+      gear.box.add(gear.left);
+      gear.box.add(gear.right);
+      gear.box.add(gear.front);
+      gear.box.add(gear.back);
     break;
 
     default:
@@ -119,7 +131,7 @@ function init() {
 
   stats = new Stats();
   container.appendChild( stats.dom );
-  //
+
   window.addEventListener( 'resize', onWindowResize, false );
 }
 
@@ -136,7 +148,6 @@ function animate() {
   //1:jumper, 2:swing,
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
-
   switch(gearType){
     case 1: //jumper
       gear.left.rotation.x += 0.01;
@@ -185,6 +196,11 @@ function animate() {
     break;
 
     case 9: //slider
+      gear.top.rotation.y += 0.01; //should change the direction
+      gear.left.rotation.x += 0.01;
+      gear.right.rotation.x -= 0.01;
+      gear.front.rotation.z += 0.01;
+      gear.back.rotation.z -= 0.01;
     break;
 
     case 10:
