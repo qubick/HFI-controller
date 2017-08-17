@@ -15,7 +15,7 @@ function Gears(numBbox) {
 			wireframe: true
 	});
 
-	var boxGeometry = new THREE.BoxBufferGeometry( 50, 50, 50 );
+	var boxGeometry = new THREE.CubeGeometry( 50, 50, 50 );
 	var box = new THREE.Mesh( boxGeometry, material1 );
 
 	//depending on the type of bbox, the shape could be different
@@ -68,6 +68,7 @@ function Gears(numBbox) {
 			front: frontBbox,
 			back: backBbox
 		}
+
 	}
 	return mesh;
 }

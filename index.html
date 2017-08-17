@@ -22,14 +22,17 @@
 		<style>
 					#container {
 						position:relative;
+						left:150px;
 					}
 					#gallery {
 						position:fixed;
-						width:300px;
+						width:150px;
 						height:100%;
 						top:0;
 						left:0;
-						background-color: rgba(0,0,0);
+						background-color: gray;
+						overflow: auto;
+    				overflow-y: scroll;
 					}
 					#drop_zone {
 						border: 5px solid blue;
@@ -45,10 +48,13 @@
 					.box__error {
 					  display: none;
 					}
+					.draggable {
+						width:150px;
+					}
 				</style>
 
 		<body
-			<div id="container" left="100px" top="0px">
+			<div id="container" left="100px" top="0px" class="droppable">
 				<script src="./build/three.js"></script>
 				<script src="./build/csg.js"></script>
 				<script src="./build/ThreeCSG.js"></script>
@@ -80,24 +86,37 @@
 			</div>
 
 			<!-- #gearbox gallery -->
-			<!-- <div id="gallery">
-				<iframe src="https://craftml.io/embed/VJRbB" width="500" height="400" frameborder="0" ></iframe>
+			<div id="gallery">
+				<!-- <iframe src="https://craftml.io/embed/VJRbB" width="500" height="400" frameborder="0" ></iframe>
 				<iframe src="https://craftml.io/embed/VJlTc" width="500" height="400" frameborder="0" ></iframe>
-				<iframe src="https://craftml.io/embed/4JEfn" width="500" height="400" frameborder="0" ></iframe>
-			</div> -->
+				<iframe src="https://craftml.io/embed/4JEfn" width="500" height="400" frameborder="0" ></iframe> -->
+				<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  			<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-
-			<!-- drag and drop file browser -->
-			<!-- <form class="box" method="post" action="" enctype="multipart/form-data">
-			  <div class="box__input">
-			    <input class="box__file" type="file" name="files[]" id="file" data-multiple-caption="{count} files selected" multiple />
-			    <label for="file"><strong>Choose a file</strong><span class="box__dragndrop"> or drag it here</span>.</label>
-			    <button class="box__button" type="submit">Upload</button>
-			  </div>
-			  <div class="box__uploading">Uploading&hellip;</div>
-			  <div class="box__success">Done!</div>
-			  <div class="box__error">Error! <span></span>.</div>
-			</form> -->
+				<img src="assets/dcam.gif" class="draggable"/>
+				<img src="assets/friction.gif" class="draggable"/>
+				<img src="assets/snailcam.gif" class="draggable"/>
+				<img src="assets/cam.gif" class="draggable"/>
+			</div>
+			<script type="text/javascript">
+			$( function() {
+		    $( ".draggable" ).draggable({
+					// helper: 'clone',
+	        // cursor: 'move',
+	        // tolerance: 'fit',
+	        // // stack: '.drag',
+	        // revert: "invalid"
+				});
+		    $( ".droppable" ).droppable({
+		      drop: function( event, ui ) {
+		        $( this )
+		          .addClass( "ui-state-highlight" )
+		          .find( "p" )
+		            .html( "Dropped!" );
+		      }
+		    });
+		  } );
+		</script>
 
 
 			<!-- file saver -->

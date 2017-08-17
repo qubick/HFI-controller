@@ -5,7 +5,7 @@ var camera, controls, scene, renderer;
 var objects = [];
 
 var stlModel;
-
+var newPower, curPower = 'rotary', conflict = false; //should be returned by the first gear
 //1:jumper, 2:swing,
 //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
 //9:dfriction
@@ -129,12 +129,24 @@ console.log("stlModel: ", stlModel)
   objects.push(gear.box);
 
 
+  if(gearType === 1 || 3 || 4 || 5 || 6 || 9){
+    newPower = 'rotary'
+  }
+  else if (gearType === 2) {
+    newPower = 'halfrotary'
+  }
+  else if (gearType === 7 || 8) {
+    newPower = 'linear'
+  }
+
+  if (curPower != newPower)
+    conflict = true; //function to prompt conflict
+
   //geometry operation
   var materialNormal = new THREE.MeshNormalMaterial();
 
   var geomGear = THREE.CSG.toCSG(gear.box);
   // var geomModel = THREE.CSG.toCSG(stlModel);
-
 
 
   var dragControls = new THREE.DragControls( objects, camera, renderer.domElement );

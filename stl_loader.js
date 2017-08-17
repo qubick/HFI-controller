@@ -6,7 +6,6 @@ function loadSTLModel(filename, filetype) {
 
   // ASCII file
   if(filetype === 'ascii'){
-    console.log('ascii model added');
     loader.load( filename, function ( geometry ) {
 
       var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
@@ -22,6 +21,11 @@ function loadSTLModel(filename, filetype) {
       scene.add( mesh );
       objects.push( mesh ); //objects from editor
 
+      // stlModel = new THREE.Geometry().fromBufferGeometry( mesh );
+      // cosole.log("StlModel: ", stlModel);
+      stlModel = mesh;
+
+      // return mesh;
     } );
   }
 
