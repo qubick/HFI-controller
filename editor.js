@@ -24,6 +24,9 @@ function onDrop(acceptedFiles, rejectedFiles){
 
 function init() {
 
+  // get type of gear and create UI according to it
+  createPanel();
+
   container = document.createElement( 'div' );
   document.body.appendChild( container );
   camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
@@ -74,7 +77,7 @@ function init() {
 
   // add models
   loadSTLModel('./models/makefairbot.stl', 'ascii');
-
+console.log("stlModel: ", stlModel)
 
   // add gears
 
@@ -90,6 +93,7 @@ function init() {
       gear.box.add(gear.left); //to group move by drag
       gear.box.add(gear.right);
 
+      // CSG operation
     break;
 
     case 3: //cam
@@ -123,6 +127,14 @@ function init() {
 
   scene.add(gear.box);
   objects.push(gear.box);
+
+
+  //geometry operation
+  var materialNormal = new THREE.MeshNormalMaterial();
+
+  var geomGear = THREE.CSG.toCSG(gear.box);
+  // var geomModel = THREE.CSG.toCSG(stlModel);
+
 
 
   var dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
@@ -203,17 +215,18 @@ function animate() {
       gear.back.rotation.z -= 0.01;
     break;
 
-    case 10:
-    break;
-
     default:
   }
+  stlModel.rotation.set( settings_model['x'] * (Math.PI / 180),
+                         settings_model['y'] * (Math.PI / 180),
+                         settings_model['z'] * (Math.PI / 180));
 
   render();
   stats.update();
 }
 
 function render() {
+
   controls.update();
   renderer.render( scene, camera );
 }
