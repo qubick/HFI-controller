@@ -179,72 +179,72 @@ function animate() {
   //1:jumper, 2:swing,
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
-  for(var i=0; i<gearIdx; i++){
-    console.log("i: ", i, "gearType: ", gearType)
-    console.log("num gear box created: ", gears.length)
-    switch(i+2){// gearType){
+  gears.forEach((gear, i) =>{
+    console.log("gear: ", gear)
+    console.log("gearType: ", i+2)
+    switch(i+3){// gearType){
       case 1: //jumper
-        gears[i].left.rotation.x += 0.01;
-        gears[i].right.rotation.x += 0.01;
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x += 0.01;
       break;
 
       case 2: //swing
         //gear.left.position.x += 0.01; //should be left/right
-        gears[i].right.position.x += 0.01;
+        gear.right.position.x += 0.01;
       break;
 
       case 3: //cam
         // cam.top.position.y += 0.01; //should be half rotation
-        gears[i].left.rotation.x += 0.01;
-        gears[i].right.rotation.x += 0.01;
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x += 0.01;
       break;
 
       case 4: //jumper gear
-        gears[i].top.position.y += 0.01; //should be up down
-        gears[i].left.rotation.x += 0.01;
-        gears[i].right.rotation.x += 0.01;
+        gear.top.position.y += 0.01; //should be up down
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x += 0.01;
       break;
 
       case 5: //friction gear
-        gears[i].top.position.y += 0.01;
-        gears[i].left.rotation.x += 0.01;
-        gears[i].right.rotation.x -= 0.01;
+        gear.top.position.y += 0.01;
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x -= 0.01;
       break;
 
       case 6: //crank
         // gear.top.position.y += 0.01; //should be updown
-        gears[i].left.rotation.x += 0.01;
-        gears[i].right.rotation.x -= 0.01;
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x -= 0.01;
       break;
 
       case 7: //crank
         // gear.top.position.y += 0.01; //should be updown
-        gears[i].left.rotation.x += 0.01;
-        gears[i].right.rotation.x -= 0.01;
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x -= 0.01;
       break;
 
       case 8: //pulley
-        gears[i].top.position.x += 0.01; //should change the direction
-        gears[i].left.position.x += 0.01;
-        gears[i].right.position.x += 0.01;
+        gear.top.position.x += 0.01; //should change the direction
+        gear.left.position.x += 0.01;
+        gear.right.position.x += 0.01;
       break;
 
       case 9: //slider
-        gears[i].top.rotation.y += 0.01; //should change the direction
-        gears[i].left.rotation.x += 0.01;
-        gears[i].right.rotation.x -= 0.01;
-        gears[i].front.rotation.z += 0.01;
-        gears[i].back.rotation.z -= 0.01;
+        gear.top.rotation.y += 0.01; //should change the direction
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x -= 0.01;
+        gear.front.rotation.z += 0.01;
+        gear.back.rotation.z -= 0.01;
       break;
 
       default:
     } //EO Switch
-  }
+  });
   stlModel.rotation.set( settings_model['x'] * (Math.PI / 180),
                          settings_model['y'] * (Math.PI / 180),
                          settings_model['z'] * (Math.PI / 180));
 
-  if(gearIdx <= numGearLimit)
+  if(gearIdx < numGearLimit)
     loadGearBox();
 
   render();
