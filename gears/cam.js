@@ -20,10 +20,10 @@ function Gears(numBbox) {
 
 	//depending on the type of bbox, the shape could be different
 	var leftBbox = new THREE.Mesh( boxGeometry, material2 );
-	leftBbox.position.set( -60, 0, 0);
+	leftBbox.position.set( -50, 0, 0);
 
 	var rightBbox = new THREE.Mesh( boxGeometry, material2 );
-	rightBbox.position.set( 60, 0, 0);
+	rightBbox.position.set( 50, 0, 0);
 
 	// # of bbox === 2
 	if( numBbox === 2 ){
@@ -39,7 +39,7 @@ function Gears(numBbox) {
 	if( numBbox === 3 ){
 
 		var top = new THREE.Mesh( boxGeometry, material2 );
-		top.position.set(0, 60, 0);
+		top.position.set(0, 50, 0);
 
 		mesh = {
 			box: box,
@@ -52,13 +52,13 @@ function Gears(numBbox) {
 	// # of bbox === 5
 	if( numBbox === 5 ){
 		var top = new THREE.Mesh( boxGeometry, material2 );
-		top.position.set(0, 60, 0);
+		top.position.set(0, 50, 0);
 
 		var frontBbox = new THREE.Mesh( boxGeometry, material2 );
-		frontBbox.position.set( 0, 0, -60);
+		frontBbox.position.set( 0, 0, -50);
 
 		var backBbox = new THREE.Mesh( boxGeometry, material2 );
-		backBbox.position.set( 0, 0, 60);
+		backBbox.position.set( 0, 0, 50);
 
 		mesh = {
 			box: box,

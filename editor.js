@@ -3,15 +3,20 @@
 var container, stats;
 var camera, controls, scene, renderer;
 var objects = [];
+var originObj, originPoint;
 
 var stlModel;
+
+//variables for rotation direction simulator
 var newPower, curPower = 'rotary', conflict = false; //should be returned by the first gear
+var collidableMeshList = [];
+var directionList = [];
+
 //1:jumper, 2:swing,
 //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
 //9:dfriction
-
 var gearType = 2
-var gears = [], gearIdx = 0, numGearLimit = 2;
+var gears = [], gearsElement, gearIdx = 0, numGearLimit = 2;
 // var cam, crank, pusher; //etc
 var topUplimit;
 
@@ -129,10 +134,13 @@ function loadGearBox() {
     case 1: //jumper
     case 2: //swing
       console.log("load gear with 2 bbox")
-      gears[gearIdx] = new Gears(2);
+      gearsElement = new Gears(2);
+      //
+      // collidableMeshList[gears[gearIdx].left.id] = gears[gearIdx].left;
+      // collidableMeshList[gears[gearIdx].right.id] = gears[gearIdx].right;
 
-      gears[gearIdx].box.add(gears[gearIdx].left); //to group move by drag
-      gears[gearIdx].box.add(gears[gearIdx].right);
+      gearsElement.box.add(gearsElement.left); //to group move by drag
+      gearsElement.box.add(gearsElement.right);
 
       // CSG operation
     break;
@@ -144,18 +152,22 @@ function loadGearBox() {
     case 7: //pulley
     case 8: //slider
       console.log("load gear with 3 bbox")
-      gears[gearIdx] = new Gears(3);
+      gearsElement = new Gears(3);
 
-      topUplimit = gears[gearIdx].top.position.y;
+      topUplimit = gearsElement.top.position.y;
       console.log("topUplimit: ", topUplimit);
 
-      gears[gearIdx].box.add(gears[gearIdx].top); //to group move by drag
-      gears[gearIdx].box.add(gears[gearIdx].left);
-      gears[gearIdx].box.add(gears[gearIdx].right);
+      // collidableMeshList[gears[gearIdx].left.id] = gears[gearIdx].left;
+      // collidableMeshList[gears[gearIdx].right.id] = gears[gearIdx].right;
+      // collidableMeshList[gears[gearIdx].top.id] = gears[gearIdx].top;
+
+      gearsElement.box.add(gearsElement.top); //to group move by drag
+      gearsElement.box.add(gearsElement.left);
+      gearsElement.box.add(gearsElement.right);
     break;
 
     case 9: //double_friction
-      gears[gearIdx] = new Gears(5);
+      gearsElement = new Gears(5);
 
       gears[gearIdx].box.add(gears[gearIdx].top); //to group move by drag
       gears[gearIdx].box.add(gears[gearIdx].left);
@@ -167,10 +179,11 @@ function loadGearBox() {
     default:
   } //end of switch
 
-    scene.add(gears[gearIdx].box);
-    objects.push(gears[gearIdx].box);
+  scene.add(gearsElement.box);
+  objects.push(gearsElement.box);
 
-  gearIdx++;
+  gearsElement.name = 'gear'+gearIdx;
+  gears[gearIdx++] = gearsElement;
 }
 //
 function animate() {
@@ -180,9 +193,7 @@ function animate() {
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
   gears.forEach((gear, i) =>{
-    console.log("gear: ", gear)
-    console.log("gearType: ", i+2)
-    switch(i+3){// gearType){
+    switch(i+2){// gearType){
       case 1: //jumper
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x += 0.01;
@@ -190,7 +201,12 @@ function animate() {
 
       case 2: //swing
         //gear.left.position.x += 0.01; //should be left/right
-        gear.right.position.x += 0.01;
+        // gear.right.position.x += 0.01;
+
+
+        //temporal
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x += 0.01;
       break;
 
       case 3: //cam
@@ -253,6 +269,50 @@ function animate() {
 
 function render() {
 
+  update();
   controls.update();
   renderer.render( scene, camera );
+}
+
+function clearText()
+{   document.getElementById('message').innerHTML = '..........';   }
+function appendText(txt)
+{   document.getElementById('message').innerHTML += txt;   }
+
+function update() {
+  //get the moving objects
+
+  var originObj = gears[0].box;
+  console.log(originObj)
+  var originPoint = originObj.position.clone();
+  console.log("originPoint: ", originPoint)
+  console.log("stlmodel position: ", stlModel.position)
+  var emptyMeshList = [];
+
+  for(var i=1; i<gearIdx; i++){
+    emptyMeshList.push(gears[i].left);
+    emptyMeshList.push(gears[i].right);
+    if(gears[i].top != undefined)
+        emptyMeshList.push(gears[i].top);
+  }
+
+  console.log("emptyMeshList: ", emptyMeshList)
+  // gears.forEach((gear) => {
+    //do left
+    for (var vertexIndex = 0; vertexIndex < originObj.geometry.vertices.length; vertexIndex++){
+  		var localVertex = originObj.geometry.vertices[vertexIndex].clone();
+  		var globalVertex = localVertex.applyMatrix4( originObj.matrix );
+  		var directionVector = globalVertex.sub( originObj.position );
+
+  		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+  		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
+  		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() )
+  			console.log("collision")
+  	}
+
+  // });
+
+  //do right
+
+  //do top if any
 }
