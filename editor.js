@@ -10,8 +10,8 @@ var newPower, curPower = 'rotary', conflict = false; //should be returned by the
 //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
 //9:dfriction
 
-var gearType = 9
-var gear;
+var gearType = 2
+var gears = [], gearIdx = 0, numGearLimit = 2;
 // var cam, crank, pusher; //etc
 var topUplimit;
 
@@ -77,57 +77,9 @@ function init() {
 
   // add models
   loadSTLModel('./models/makefairbot.stl', 'ascii');
-console.log("stlModel: ", stlModel)
 
-  // add gears
-
-  //1:jumper, 2:swing,
-  //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
-  //9:dfriction
-  switch(gearType){
-
-    case 1: //jumper
-    case 2: //swing
-      gear = new Gears(2);
-
-      gear.box.add(gear.left); //to group move by drag
-      gear.box.add(gear.right);
-
-      // CSG operation
-    break;
-
-    case 3: //cam
-    case 4: //jumper_gear
-    case 5: //friction
-    case 6: //crank
-    case 7: //pulley
-    case 8: //slider
-      gear = new Gears(3);
-
-      topUplimit = gear.top.position.y;
-      console.log("topUplimit: ", topUplimit);
-
-      gear.box.add(gear.top); //to group move by drag
-      gear.box.add(gear.left);
-      gear.box.add(gear.right);
-    break;
-
-    case 9: //double_friction
-      gear = new Gears(5);
-
-      gear.box.add(gear.top); //to group move by drag
-      gear.box.add(gear.left);
-      gear.box.add(gear.right);
-      gear.box.add(gear.front);
-      gear.box.add(gear.back);
-    break;
-
-    default:
-  }
-
-  scene.add(gear.box);
-  objects.push(gear.box);
-
+  // load gears
+  loadGearBox();
 
   if(gearType === 1 || 3 || 4 || 5 || 6 || 9){
     newPower = 'rotary'
@@ -145,7 +97,8 @@ console.log("stlModel: ", stlModel)
   //geometry operation
   var materialNormal = new THREE.MeshNormalMaterial();
 
-  var geomGear = THREE.CSG.toCSG(gear.box);
+  //***** prepare for intersection
+  // var geomGear = THREE.CSG.toCSG(gears[gearIdx].box);
   // var geomModel = THREE.CSG.toCSG(stlModel);
 
 
@@ -165,6 +118,60 @@ function onWindowResize() {
   renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
+function loadGearBox() {
+  // add gears
+
+  //1:jumper, 2:swing,
+  //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
+  //9:dfriction
+  switch(gearIdx+2){//gearType){
+
+    case 1: //jumper
+    case 2: //swing
+      console.log("load gear with 2 bbox")
+      gears[gearIdx] = new Gears(2);
+
+      gears[gearIdx].box.add(gears[gearIdx].left); //to group move by drag
+      gears[gearIdx].box.add(gears[gearIdx].right);
+
+      // CSG operation
+    break;
+
+    case 3: //cam
+    case 4: //jumper_gear
+    case 5: //friction
+    case 6: //crank
+    case 7: //pulley
+    case 8: //slider
+      console.log("load gear with 3 bbox")
+      gears[gearIdx] = new Gears(3);
+
+      topUplimit = gears[gearIdx].top.position.y;
+      console.log("topUplimit: ", topUplimit);
+
+      gears[gearIdx].box.add(gears[gearIdx].top); //to group move by drag
+      gears[gearIdx].box.add(gears[gearIdx].left);
+      gears[gearIdx].box.add(gears[gearIdx].right);
+    break;
+
+    case 9: //double_friction
+      gears[gearIdx] = new Gears(5);
+
+      gears[gearIdx].box.add(gears[gearIdx].top); //to group move by drag
+      gears[gearIdx].box.add(gears[gearIdx].left);
+      gears[gearIdx].box.add(gears[gearIdx].right);
+      gears[gearIdx].box.add(gears[gearIdx].front);
+      gears[gearIdx].box.add(gears[gearIdx].back);
+    break;
+
+    default:
+  } //end of switch
+
+    scene.add(gears[gearIdx].box);
+    objects.push(gears[gearIdx].box);
+
+  gearIdx++;
+}
 //
 function animate() {
   requestAnimationFrame( animate );
@@ -172,66 +179,73 @@ function animate() {
   //1:jumper, 2:swing,
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
-  switch(gearType){
-    case 1: //jumper
-      gear.left.rotation.x += 0.01;
-      gear.right.rotation.x += 0.01;
-    break;
+  for(var i=0; i<gearIdx; i++){
+    console.log("i: ", i, "gearType: ", gearType)
+    console.log("num gear box created: ", gears.length)
+    switch(i+2){// gearType){
+      case 1: //jumper
+        gears[i].left.rotation.x += 0.01;
+        gears[i].right.rotation.x += 0.01;
+      break;
 
-    case 2: //swing
-      //gear.left.position.x += 0.01; //should be left/right
-      gear.right.position.x += 0.01;
-    break;
+      case 2: //swing
+        //gear.left.position.x += 0.01; //should be left/right
+        gears[i].right.position.x += 0.01;
+      break;
 
-    case 3: //cam
-      // cam.top.position.y += 0.01; //should be half rotation
-      gear.left.rotation.x += 0.01;
-      gear.right.rotation.x += 0.01;
-    break;
+      case 3: //cam
+        // cam.top.position.y += 0.01; //should be half rotation
+        gears[i].left.rotation.x += 0.01;
+        gears[i].right.rotation.x += 0.01;
+      break;
 
-    case 4: //jumper gear
-      gear.top.position.y += 0.01; //should be up down
-      gear.left.rotation.x += 0.01;
-      gear.right.rotation.x += 0.01;
-    break;
+      case 4: //jumper gear
+        gears[i].top.position.y += 0.01; //should be up down
+        gears[i].left.rotation.x += 0.01;
+        gears[i].right.rotation.x += 0.01;
+      break;
 
-    case 5: //friction gear
-      gear.top.position.y += 0.01;
-      gear.left.rotation.x += 0.01;
-      gear.right.rotation.x -= 0.01;
-    break;
+      case 5: //friction gear
+        gears[i].top.position.y += 0.01;
+        gears[i].left.rotation.x += 0.01;
+        gears[i].right.rotation.x -= 0.01;
+      break;
 
-    case 6: //crank
-      // gear.top.position.y += 0.01; //should be updown
-      gear.left.rotation.x += 0.01;
-      gear.right.rotation.x -= 0.01;
-    break;
+      case 6: //crank
+        // gear.top.position.y += 0.01; //should be updown
+        gears[i].left.rotation.x += 0.01;
+        gears[i].right.rotation.x -= 0.01;
+      break;
 
-    case 7: //crank
-      // gear.top.position.y += 0.01; //should be updown
-      gear.left.rotation.x += 0.01;
-      gear.right.rotation.x -= 0.01;
-    break;
+      case 7: //crank
+        // gear.top.position.y += 0.01; //should be updown
+        gears[i].left.rotation.x += 0.01;
+        gears[i].right.rotation.x -= 0.01;
+      break;
 
-    case 8: //pulley
-      gear.top.position.x += 0.01; //should change the direction
-      gear.left.position.x += 0.01;
-      gear.right.position.x += 0.01;
-    break;
+      case 8: //pulley
+        gears[i].top.position.x += 0.01; //should change the direction
+        gears[i].left.position.x += 0.01;
+        gears[i].right.position.x += 0.01;
+      break;
 
-    case 9: //slider
-      gear.top.rotation.y += 0.01; //should change the direction
-      gear.left.rotation.x += 0.01;
-      gear.right.rotation.x -= 0.01;
-      gear.front.rotation.z += 0.01;
-      gear.back.rotation.z -= 0.01;
-    break;
+      case 9: //slider
+        gears[i].top.rotation.y += 0.01; //should change the direction
+        gears[i].left.rotation.x += 0.01;
+        gears[i].right.rotation.x -= 0.01;
+        gears[i].front.rotation.z += 0.01;
+        gears[i].back.rotation.z -= 0.01;
+      break;
 
-    default:
+      default:
+    } //EO Switch
   }
   stlModel.rotation.set( settings_model['x'] * (Math.PI / 180),
                          settings_model['y'] * (Math.PI / 180),
                          settings_model['z'] * (Math.PI / 180));
+
+  if(gearIdx <= numGearLimit)
+    loadGearBox();
 
   render();
   stats.update();

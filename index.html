@@ -35,7 +35,8 @@
     				overflow-y: scroll !important;
 					}
 					#drop_zone {
-						border: 5px solid blue;
+						border: 0px solid blue;
+						background-color: gray;
 						position:fixed;
 						width:400px;
 						height:200px;
@@ -70,12 +71,9 @@
 				<script src="./js/libs/dat.gui.min.js"></script>
 				<script src="./js/libs/stats.min.js"></script>
 
-				<!-- <script src="./js/geometries/DecalGeometry.js"></script> -->
 				<script src="./js/controls/DragControls.js"></script>
 				<script src="./js/controls/TrackballControls.js"></script>
 
-				<!-- <script src="./environment_setting.js"></script>
-				<script src="./client_channel.js"></script> -->
 
 				<!-- gear libraries -->
 				<script src="./gears/cam.js"></script>
@@ -84,17 +82,19 @@
 				<script src="./editor.js"></script>
 
 				<!-- #gearbox gallery -->
-				<div id="gallery">
-					<!-- <iframe src="https://craftml.io/embed/VJRbB" width="500" height="400" frameborder="0" ></iframe>
-					<iframe src="https://craftml.io/embed/VJlTc" width="500" height="400" frameborder="0" ></iframe>
-					<iframe src="https://craftml.io/embed/4JEfn" width="500" height="400" frameborder="0" ></iframe> -->
+				<div id="gallery"
+    overflow-y: scroll; overflow-y: auto;>
 					<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 	  			<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-					<img src="assets/dcam.gif" class="draggable"/>
-					<img src="assets/friction.gif" class="draggable"/>
-					<img src="assets/snailcam.gif" class="draggable"/>
-					<img src="assets/cam.gif" class="draggable"/>
+					<img src="assets/jumper.png" class="draggable"/>
+					<img src="assets/jumper-wheel.png" class="draggable"/>
+					<img src="assets/cam.png" class="draggable"/>
+					<img src="assets/dcam.png" class="draggable"/>
+					<img src="assets/friction-gear.png" class="draggable"/>
+					<img src="assets/pulley.png" class="draggable"/>
+					<img src="assets/slider.png" class="draggable"/>
+					<img src="assets/swing.png" class="draggable"/>
 				</div>
 
 			</div>

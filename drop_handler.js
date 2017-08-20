@@ -12,8 +12,10 @@ function drop_handler(evt){
     for(var i=0; i < dt.items.length; i++){
       if(dt.items[i].kind === 'file'){
         var f = dt.items[i].getAsFile();
-        saveAs(f, "sample.stl");
+        // saveAs(f, "sample.stl");
         console.log("...file[" + i + "].name = " + f.name + " saved")
+        //load f right away to the interface
+        loadSTLModel(f, 'ascii')
       }
     }
   } else {
