@@ -27,12 +27,12 @@
 					#gallery {
 						position:fixed;
 						width:150px;
-						height:100%;
+						height: 100%;
 						top:0;
 						left:0;
 						background-color: gray;
 						overflow: auto;
-    				overflow-y: scroll;
+    				overflow-y: scroll !important;
 					}
 					#drop_zone {
 						border: 5px solid blue;
@@ -48,13 +48,13 @@
 					.box__error {
 					  display: none;
 					}
-					.draggable {
+					img {
 						width:150px;
 					}
 				</style>
 
-		<body
-			<div id="container" left="100px" top="0px" class="droppable">
+		<body>
+			<div id="container" left="0px" top="0px" class="droppable">
 				<script src="./build/three.js"></script>
 				<script src="./build/csg.js"></script>
 				<script src="./build/ThreeCSG.js"></script>
@@ -82,48 +82,49 @@
 				<script src="./stl_loader.js"></script>
 				<script src="./paramUI.js"></script>
 				<script src="./editor.js"></script>
-				<!-- <script src="./gallery.js"></script> -->
+
+				<!-- #gearbox gallery -->
+				<div id="gallery">
+					<!-- <iframe src="https://craftml.io/embed/VJRbB" width="500" height="400" frameborder="0" ></iframe>
+					<iframe src="https://craftml.io/embed/VJlTc" width="500" height="400" frameborder="0" ></iframe>
+					<iframe src="https://craftml.io/embed/4JEfn" width="500" height="400" frameborder="0" ></iframe> -->
+					<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	  			<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+					<img src="assets/dcam.gif" class="draggable"/>
+					<img src="assets/friction.gif" class="draggable"/>
+					<img src="assets/snailcam.gif" class="draggable"/>
+					<img src="assets/cam.gif" class="draggable"/>
+				</div>
+
 			</div>
 
-			<!-- #gearbox gallery -->
-			<div id="gallery">
-				<!-- <iframe src="https://craftml.io/embed/VJRbB" width="500" height="400" frameborder="0" ></iframe>
-				<iframe src="https://craftml.io/embed/VJlTc" width="500" height="400" frameborder="0" ></iframe>
-				<iframe src="https://craftml.io/embed/4JEfn" width="500" height="400" frameborder="0" ></iframe> -->
-				<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-  			<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
-				<img src="assets/dcam.gif" class="draggable"/>
-				<img src="assets/friction.gif" class="draggable"/>
-				<img src="assets/snailcam.gif" class="draggable"/>
-				<img src="assets/cam.gif" class="draggable"/>
-			</div>
 			<script type="text/javascript">
 			$( function() {
-		    $( ".draggable" ).draggable({
-					// helper: 'clone',
-	        // cursor: 'move',
-	        // tolerance: 'fit',
-	        // // stack: '.drag',
-	        // revert: "invalid"
+				$( ".draggable" ).draggable({
+					helper: 'clone',
+					cursor: 'move',
+					// tolerance: 'fit',
+					// // stack: '.drag',
+					revert: "invalid",
+					refrecshPositions: true,
 				});
-		    $( ".droppable" ).droppable({
-		      drop: function( event, ui ) {
-		        $( this )
-		          .addClass( "ui-state-highlight" )
-		          .find( "p" )
-		            .html( "Dropped!" );
-		      }
-		    });
-		  } );
-		</script>
-
+				$("#container").droppable({
+				  drop: function(event, ui) {
+						ui.draggable.addClass("dropped");
+        		$("#briefcase-droppable").append(ui.draggable);
+					}
+				});
+			});
+			</script>
 
 			<!-- file saver -->
-			<script src="./js/minjs/FileSaver.min.js"></script>
+			<!-- <script src="./js/minjs/FileSaver.min.js"></script>
 			<script src="./drop_handler.js"></script>
 			<div id="drop_zone" ondrop="drop_handler(event);" ondragover="dragover_handler(event);">
 			  <strong>Drag one or more files to this Drop Zone ...</strong>
-			</div>
+			</div> -->
+
+			<input id="myInput" type="file" style="visibility:hidden" />
 		</body>
 </html>

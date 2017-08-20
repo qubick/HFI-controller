@@ -5,11 +5,18 @@ var settings_model = {
     'y': 0.0,
     'z': 0.0
 }
-
+var params = {
+  loadFile: function(){
+    document.getElementById("myInput").click()
+  }
+}
 function createPanel(){
   //get type of gear
 
   var panel = new dat.GUI( { width: 310});
+
+  //file upload
+  panel.add(params, 'loadFile').name('Load 3D Model');
 
   var folder1 = panel.addFolder( 'Model Rotation' );
   var folder2 = panel.addFolder( 'Left BoudingBox' );
@@ -25,4 +32,6 @@ function createPanel(){
   //   var folder4 = panel.addFolder( 'TopBoudingBox' );
   //   folder4.open();
   // }
+
+
 }
