@@ -9,24 +9,23 @@ var stlModel;
 
 //variables for rotation direction simulator
 var newPower, curPower = 'rotary', conflict = false; //should be returned by the first gear
-var collidableMeshList = [];
+var collisionOccured = false, collidableMeshList = [];
 var directionList = [];
 
 //1:jumper, 2:swing,
 //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
 //9:dfriction
-var gearType = 3
 var gears = [], gearsElement, gearIdx = 0, numGearLimit = 2;
 // var cam, crank, pusher; //etc
-var swingDelta = 0.01, camDelta = 0.01, crankDelta = 0.5,
-    pulleyDelta = 0.5, sliderDelta = 0.5, topUplimit;
+var swingDelta = 0.01, camDelta = 0.01,
+    crankDelta = 0.25, pulleyDelta = 0.25, sliderDelta = 0.25, topUplimit;
 
 init();
 animate();
 
-function onDrop(acceptedFiles, rejectedFiles){
-
-};
+// function onDrop(acceptedFiles, rejectedFiles){
+//
+// };
 
 function init() {
 
@@ -61,11 +60,11 @@ function init() {
 
   //Ground
   var plane = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry( 100, 100 ),
+    new THREE.PlaneBufferGeometry( 1000, 1000 ),
     new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
   );
   plane.rotation.x = -Math.PI/2;
-  plane.position.y = -0.5;
+  plane.position.y = -50;
   scene.add( plane );
 
   plane.receiveShadow = true;
@@ -82,7 +81,7 @@ function init() {
 
 
   // add models
-  loadSTLModel('./models/makefairbot.stl', 'ascii');
+  // loadSTLModel('./models/makefairbot.stl', 'ascii');
 
   // load gears
   loadGearBox();
@@ -116,9 +115,6 @@ function onWindowResize() {
 
 function loadGearBox() {
   // add gears
-  //1:jumper, 2:swing,
-  //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
-  //9:dfriction
   switch(gearIdx+6){//gearType){
 
     case 1: //jumper
@@ -128,7 +124,6 @@ function loadGearBox() {
 
       gearsElement.box.add(gearsElement.left); //to group move by drag
       gearsElement.box.add(gearsElement.right);
-
     break;
 
     case 3: //cam
@@ -146,6 +141,9 @@ function loadGearBox() {
       gearsElement.box.add(gearsElement.top); //to group move by drag
       gearsElement.box.add(gearsElement.left);
       gearsElement.box.add(gearsElement.right);
+      gearsElement.box.add(gearsElement.lshaft);
+      gearsElement.box.add(gearsElement.rshaft);
+      gearsElement.box.add(gearsElement.tshaft);
     break;
 
     case 9: //double_friction
@@ -169,11 +167,13 @@ function loadGearBox() {
   else if (gearIdx+6 === 7 || 8)
     gearsElement.name = 'linear'
 
-
+  gearsElement.box.position.x += 150 * gearIdx;
   scene.add(gearsElement.box);
   objects.push(gearsElement.box);
 
+
   gears[gearIdx] = gearsElement;
+  // gears[gearIdx].position.x += 50 * gearIdx;
   gearIdx++;
 }
 
@@ -227,6 +227,7 @@ function animate() {
           crankDelta *= -1;
 
         gear.top.position.y += crankDelta; //should be updown
+        gear.tshaft.position.y += crankDelta;
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x -= 0.01;
       break;
@@ -261,10 +262,12 @@ function animate() {
 
       default:
     } //EO Switch
+
   });
-  stlModel.rotation.set( settings_model['x'] * (Math.PI / 180),
-                         settings_model['y'] * (Math.PI / 180),
-                         settings_model['z'] * (Math.PI / 180));
+
+  // stlModel.rotation.set( settings_model['x'] * (Math.PI / 180),
+  //                        settings_model['y'] * (Math.PI / 180),
+  //                        settings_model['z'] * (Math.PI / 180));
 
   if(gearIdx < numGearLimit)
     loadGearBox();
@@ -282,7 +285,6 @@ function render() {
 
 
 function update() {
-  //get the moving objects
 
   var originObj = gears[0].box;
   var originPoint = originObj.position.clone();
@@ -290,6 +292,7 @@ function update() {
   // console.log(originPoint)
   var emptyMeshList = [];
   var powerList = [];
+
   for(var i=1; i<gearIdx; i++){
     powerList.push(gears[i].name);
 
@@ -299,27 +302,24 @@ function update() {
         emptyMeshList.push(gears[i].top);
   }
 
-  // console.log("emptyMeshList: ", emptyMeshList)
-  // console.log("powerList: ", powerList);
+  //collision detection
+  for (var vertexIndex = 0; vertexIndex < originObj.geometry.vertices.length; vertexIndex++){
+		var localVertex = originObj.geometry.vertices[vertexIndex].clone();
+		var globalVertex = localVertex.applyMatrix4( originObj.matrix );
+		var directionVector = globalVertex.sub( originObj.position );
 
-  // gears.forEach((gear) => {
-    //do left
-    for (var vertexIndex = 0; vertexIndex < originObj.geometry.vertices.length; vertexIndex++){
-  		var localVertex = originObj.geometry.vertices[vertexIndex].clone();
-  		var globalVertex = localVertex.applyMatrix4( originObj.matrix );
-  		var directionVector = globalVertex.sub( originObj.position );
+		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
+		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
+      powerList.forEach((power) => {
+          if(power != originObj.name) //&& (collisionOccured === false)){
+			     window.alert("Gearboxes are not compatible in power direction");
+          // console.log("collision")
+          //  collisionOccured = true
+        //  }
+      })
+    }
+	}
 
-  		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
-  		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
-  		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
-        powerList.forEach((power) => {
-          console.log("power in emptyMeshList: ", power)
-          console.log("standard obj power: ", gears[0].name)
-            if(power != originObj.name)
-  			     console.log("collision")
-        })
-      }
-  	}
 
-  // });
 }
