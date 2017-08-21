@@ -18,7 +18,8 @@ var directionList = [];
 var gearType = 3
 var gears = [], gearsElement, gearIdx = 0, numGearLimit = 2;
 // var cam, crank, pusher; //etc
-var topUplimit;
+var swingDelta = 0.01, camDelta = 0.01, crankDelta = 0.5,
+    pulleyDelta = 0.5, sliderDelta = 0.5, topUplimit;
 
 init();
 animate();
@@ -86,16 +87,6 @@ function init() {
   // load gears
   loadGearBox();
 
-  // if(gearType === 1 || 3 || 4 || 5 || 6 || 9){
-  //   newPower = 'rotary'
-  // }
-  // else if (gearType === 2) {
-  //   newPower = 'halfrotary'
-  // }
-  // else if (gearType === 7 || 8) {
-  //   newPower = 'linear'
-  // }
-
   if (curPower != newPower)
     conflict = true; //function to prompt conflict
 
@@ -128,15 +119,12 @@ function loadGearBox() {
   //1:jumper, 2:swing,
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
-  switch(gearIdx+2){//gearType){
+  switch(gearIdx+6){//gearType){
 
     case 1: //jumper
     case 2: //swing
       console.log("load gear with 2 bbox")
       gearsElement = new Gears(2);
-
-      // collidableMeshList[gears[gearIdx].left.id] = gears[gearIdx].left;
-      // collidableMeshList[gears[gearIdx].right.id] = gears[gearIdx].right;
 
       gearsElement.box.add(gearsElement.left); //to group move by drag
       gearsElement.box.add(gearsElement.right);
@@ -174,11 +162,11 @@ function loadGearBox() {
     default:
   } //end of switch
 
-  if (gearIdx+2 === 2)
+  if (gearIdx+6 === 2)
     gearsElement.name = 'halfrotary'
-  else if(gearIdx+2 === 1 || 3 || 4 || 5 || 6 || 9)
+  else if(gearIdx+6 === 1 || 3 || 4 || 5 || 6 || 9)
     gearsElement.name = 'rotary'
-  else if (gearIdx+2 === 7 || 8)
+  else if (gearIdx+6 === 7 || 8)
     gearsElement.name = 'linear'
 
 
@@ -188,7 +176,7 @@ function loadGearBox() {
   gears[gearIdx] = gearsElement;
   gearIdx++;
 }
-//
+
 function animate() {
   requestAnimationFrame( animate );
 
@@ -196,23 +184,27 @@ function animate() {
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
   gears.forEach((gear, i) =>{
-    switch(i+2){// gearType){
+    switch(i+6){// gearType){
       case 1: //jumper
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x += 0.01;
       break;
 
       case 2: //swing
-        //gear.left.position.x += 0.01; //should be left/right
-        // gear.right.position.x += 0.01;
-
-        //temporal
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x += 0.01;
+        var rotAngle = gear.left.rotation.x;
+        if((rotAngle < 0) || (rotAngle > 180 * Math.PI/180)){
+          swingDelta *= -1;
+        }
+        gear.left.rotation.x += swingDelta;
+        gear.right.rotation.x += swingDelta;
       break;
 
       case 3: //cam
-        // cam.top.position.y += 0.01; //should be half rotation
+        var rotAngle = gear.top.rotation.y;
+        if((rotAngle < 0) || (rotAngle > 180 * Math.PI/180)){
+          camDelta *= -1;
+        }
+        gear.top.rotation.y += camDelta; //should be half rotation
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x += 0.01;
       break;
@@ -230,24 +222,36 @@ function animate() {
       break;
 
       case 6: //crank
-        // gear.top.position.y += 0.01; //should be updown
+        var topPos = gear.top.position.y;
+        if((topPos > gear.box.position.y + 75) || (topPos < gear.box.position.y + 50)) //original pos+=50, w/2=25
+          crankDelta *= -1;
+
+        gear.top.position.y += crankDelta; //should be updown
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x -= 0.01;
       break;
 
-      case 7: //crank
-        // gear.top.position.y += 0.01; //should be updown
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x -= 0.01;
+      case 7: //pulley
+        var leverPos = gear.left.position.x;
+        if((leverPos <= gear.box.position.x - 75) || (leverPos >= gear.box.position.x - 25)) //original pos+=50, w/2=25
+          pulleyDelta *= -1;
+
+        gear.top.position.x += pulleyDelta;
+        gear.left.position.x += pulleyDelta;
+        gear.right.position.x += pulleyDelta;
       break;
 
-      case 8: //pulley
+      case 8: //slider
+        var leverPos = gear.left.position.x;
+        if((leverPos <= gear.box.position.x - 75) || (leverPos >= gear.box.position.x - 25)) //original pos+=50, w/2=25
+          sliderDelta *= -1;
+
         gear.top.position.x += 0.01; //should change the direction
-        gear.left.position.x += 0.01;
-        gear.right.position.x += 0.01;
+        gear.left.position.x += sliderDelta;
+        gear.right.position.x += sliderDelta;
       break;
 
-      case 9: //slider
+      case 9: //double_friction_wheel
         gear.top.rotation.y += 0.01; //should change the direction
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x -= 0.01;
@@ -318,8 +322,4 @@ function update() {
   	}
 
   // });
-
-  //do right
-
-  //do top if any
 }
