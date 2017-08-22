@@ -1,36 +1,64 @@
 //should be global
 
-var settings_model = {
+var settings = {
+  model: {
     'x': 0.0,
     'y': 0.0,
     'z': 0.0
+  },
+  leftBbox: {
+    'x': 0.0,
+    'y': 0.0,
+    'z': 0.0
+  },
+  rightBbox: {
+    'x': 0.0,
+    'y': 0.0,
+    'z': 0.0
+  },
+  topBbox: {
+    'x': 0.0,
+    'y': 0.0,
+    'z': 0.0
+  }
 }
+
 var params = {
   loadFile: function(){
     document.getElementById("myInput").click()
   }
 }
+
+var panel = new dat.GUI();
+
+var modelUI = panel.addFolder( 'Model Rotation' );
+var leftBoxUI = panel.addFolder( 'Scale Left BoudingBox' );
+var rightBoxUI = panel.addFolder( 'Scale Right BoudingBox' );
+var topBoxUI = panel.addFolder( 'Scale Top BoundingBox' );
+
+
 function createPanel(){
-  //get type of gear
-
-  var panel = new dat.GUI( { width: 310});
-
   //file upload
   panel.add(params, 'loadFile').name('Load 3D Model');
 
-  var folder1 = panel.addFolder( 'Model Rotation' );
-  var folder2 = panel.addFolder( 'Left BoudingBox' );
-  var folder3 = panel.addFolder( 'Right BoudingBox' );
+  //model params
+  modelUI.add( settings.model, 'x', 0, 360, 1).listen();//.onFinishCahnge(()=>{}); //then update model scale
+  modelUI.add( settings.model, 'y', 0, 360, 1).listen();;
+  modelUI.add( settings.model, 'z', 0, 360, 1).listen();;
+  modelUI.open();
 
-  folder1.add( settings_model, 'x', 0, 360, 1); //then update model scale
-  folder1.add( settings_model, 'y', 0, 360, 1);
-  folder1.add( settings_model, 'z', 0, 360, 1);
+}
 
-  folder1.open();
+function addPanel(gearType){
 
-  // if(numBbox === 3){
-  //   var folder4 = panel.addFolder( 'TopBoudingBox' );
-  //   folder4.open();
-  // }
+  topBoxUI.add( settings.topBbox, 'x', 0, 5).name('Width').listen(); //then update model scale
+  topBoxUI.add( settings.topBbox, 'y', 0, 5).name('Height').listen();
+  topBoxUI.add( settings.topBbox, 'z', 0, 5).name('Length').listen();
 
+  topBoxUI.open();
+}
+
+function removePanel(gearType){
+  topBoxUI.close();
+  delete topBoxUI;
 }

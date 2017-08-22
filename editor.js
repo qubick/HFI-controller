@@ -16,7 +16,7 @@ var directionList = [];
 //1:jumper, 2:swing,
 //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
 //9:dfriction
-var gears = [], gearsElement, gearIdx = 0, numGearLimit = 2;
+var gears = [], gearsElement, gearIdx = 0;
 // var cam, crank, pusher; //etc
 var swingDelta = 0.01, camDelta = 0.01,
     crankDelta = 0.25, pulleyDelta = 0.25, sliderDelta = 0.25;
@@ -24,9 +24,6 @@ var swingDelta = 0.01, camDelta = 0.01,
 init();
 animate();
 
-// function onDrop(acceptedFiles, rejectedFiles){
-//
-// };
 
 function init() {
 
@@ -134,6 +131,8 @@ function loadGearBox(gearType) {
 
       gearsElement.box.add(gearsElement.left); //to group move by drag
       gearsElement.box.add(gearsElement.right);
+
+      removePanel();
     break;
 
     case 3: //cam
@@ -151,6 +150,8 @@ function loadGearBox(gearType) {
       gearsElement.box.add(gearsElement.lshaft);
       gearsElement.box.add(gearsElement.rshaft);
       gearsElement.box.add(gearsElement.tshaft);
+
+      addPanel(); //add top bounding box UI
     break;
 
     case 9: //double_friction
@@ -241,7 +242,7 @@ function animate() {
       break;
 
       case 7: //pulley
-        var leverPos = gear.top.position.x + 150*i; //base position
+        var leverPos = gear.top.position.x + (160 * i); //base position
         if((leverPos < gear.box.position.x - 10) || (leverPos > gear.box.position.x + 10)) //original pos+=50, w/2=25
           pulleyDelta *= -1;
 
@@ -280,9 +281,6 @@ function animate() {
   // stlModel.rotation.set( settings_model['x'] * (Math.PI / 180),
   //                        settings_model['y'] * (Math.PI / 180),
   //                        settings_model['z'] * (Math.PI / 180));
-
-  // if(gearIdx < numGearLimit)
-  //   loadGearBox();
 
   render();
   stats.update();
