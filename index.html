@@ -14,7 +14,9 @@
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"></link>
 
 				<!-- jQuery library -->
-				<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+				<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> -->
+				<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+				<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
 				<script type="javascript/text" src="server.js"></script>
 		</head>
@@ -31,7 +33,7 @@
 						top:0;
 						left:0;
 						background-color: white;
-						overflow: auto;
+						/*overflow: auto;*/
     				overflow-y: scroll !important;
 					}
 					#drop_zone {
@@ -55,9 +57,7 @@
 				</style>
 
 		<body>
-			<div id="message"></div>
-
-			<div id="container" left="0px" top="0px" class="droppable">
+			<div id="container" left="150px" top="0px" class="droppable">
 				<script src="./build/three.js"></script>
 				<!-- <script src="./build/csg.js"></script> -->
 				<!-- <script src="./build/ThreeCSG.js"></script> -->
@@ -77,25 +77,40 @@
 				<script src="./js/controls/TrackballControls.js"></script>
 
 
-				<!-- gear libraries -->
+				<script src="eventHandler.js"></script>
 				<script src="./gears/cam.js"></script>
 				<script src="./stl_loader.js"></script>
 				<script src="./paramUI.js"></script>
 				<script src="./editor.js"></script>
 
 				<!-- #gearbox gallery -->
-				<div id="gallery">
-					<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-	  			<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+				<div id="gallery" onclick="returnGearSelected(event)">
+					<!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	  			<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
 
-					<img src="assets/jumper.png" class="draggable"/>
-					<img src="assets/jumper-wheel.png" class="draggable"/>
-					<img src="assets/cam.png" class="draggable"/>
-					<img src="assets/dcam.png" class="draggable"/>
-					<img src="assets/friction-gear.png" class="draggable"/>
-					<img src="assets/pulley.png" class="draggable"/>
-					<img src="assets/slider.png" class="draggable"/>
-					<img src="assets/swing.png" class="draggable"/>
+					<div>
+						<img src="assets/jumper.png" name="1" class="draggable"/>
+					</div>
+					<div>
+						<img src="assets/jumper-wheel.png" name="2" class="draggable"/>
+					</div>
+					<div>
+						<img src="assets/cam.png" name="3" class="draggable"/>
+					</div>
+					<div>
+						<img src="assets/dcam.png" name="4" class="draggable"/>
+					</div>
+					<div>
+						<img src="assets/friction-gear.png" name="5" class="draggable"/>
+					</div>
+					<div>
+						<img src="assets/pulley.png" name="6" class="draggable"/>
+					</div>
+					<div>
+						<img src="assets/slider.png" name="7" class="draggable"/>
+					</div>
+					<div>
+						<img src="assets/swing.png" name="8" class="draggable"/>
 				</div>
 
 			</div>
@@ -110,10 +125,9 @@
 					revert: "invalid",
 					refrecshPositions: true,
 				});
-				$("#container").droppable({
+				$(".droppable").droppable({
 				  drop: function(event, ui) {
-						ui.draggable.addClass("dropped");
-        		$("#briefcase-droppable").append(ui.draggable);
+						console.log(event)
 					}
 				});
 			});

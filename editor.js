@@ -6,6 +6,7 @@ var objects = [];
 var originObj, originPoint;
 
 var stlModel;
+var selectedGear;
 
 //variables for rotation direction simulator
 var newPower, curPower = 'rotary', conflict = false; //should be returned by the first gear
@@ -18,7 +19,7 @@ var directionList = [];
 var gears = [], gearsElement, gearIdx = 0, numGearLimit = 2;
 // var cam, crank, pusher; //etc
 var swingDelta = 0.01, camDelta = 0.01,
-    crankDelta = 0.25, pulleyDelta = 0.25, sliderDelta = 0.25, topUplimit;
+    crankDelta = 0.25, pulleyDelta = 0.25, sliderDelta = 0.25;
 
 init();
 animate();
@@ -84,7 +85,7 @@ function init() {
   // loadSTLModel('./models/makefairbot.stl', 'ascii');
 
   // load gears
-  loadGearBox();
+  // loadGearBox();
 
   if (curPower != newPower)
     conflict = true; //function to prompt conflict
@@ -113,11 +114,20 @@ function onWindowResize() {
   renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-function loadGearBox() {
+function returnGearSelected(event){
+
+  selectedGear = event.target.name;
+  console.log("selected Gear: ", selectedGear);
+  loadGearBox(parseInt(selectedGear));
+}
+
+function loadGearBox(gearType) {
   // add gears
-  switch(gearIdx+6){//gearType){
+  console.log("load gear box func() loaded")
+  switch(gearType){//gearType){
 
     case 1: //jumper
+      console.log("jumper is created")
     case 2: //swing
       console.log("load gear with 2 bbox")
       gearsElement = new Gears(2);
@@ -134,9 +144,6 @@ function loadGearBox() {
     case 8: //slider
       console.log("load gear with 3 bbox")
       gearsElement = new Gears(3);
-
-      topUplimit = gearsElement.top.position.y;
-      console.log("topUplimit: ", topUplimit);
 
       gearsElement.box.add(gearsElement.top); //to group move by drag
       gearsElement.box.add(gearsElement.left);
@@ -158,13 +165,14 @@ function loadGearBox() {
     break;
 
     default:
+      console.log("in switch case")
   } //end of switch
 
-  if (gearIdx+6 === 2)
+  if (selectedGear === 2)
     gearsElement.name = 'halfrotary'
-  else if(gearIdx+6 === 1 || 3 || 4 || 5 || 6 || 9)
+  else if(selectedGear === 1 || 3 || 4 || 5 || 6 || 9)
     gearsElement.name = 'rotary'
-  else if (gearIdx+6 === 7 || 8)
+  else if (selectedGear === 7 || 8)
     gearsElement.name = 'linear'
 
   gearsElement.box.position.x += 150 * gearIdx;
@@ -184,7 +192,7 @@ function animate() {
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
   gears.forEach((gear, i) =>{
-    switch(i+6){// gearType){
+    switch(i){// gearType){
       case 1: //jumper
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x += 0.01;
@@ -233,13 +241,17 @@ function animate() {
       break;
 
       case 7: //pulley
-        var leverPos = gear.left.position.x;
-        if((leverPos <= gear.box.position.x - 75) || (leverPos >= gear.box.position.x - 25)) //original pos+=50, w/2=25
+        var leverPos = gear.top.position.x + 150*i; //base position
+        if((leverPos < gear.box.position.x - 10) || (leverPos > gear.box.position.x + 10)) //original pos+=50, w/2=25
           pulleyDelta *= -1;
 
         gear.top.position.x += pulleyDelta;
         gear.left.position.x += pulleyDelta;
         gear.right.position.x += pulleyDelta;
+        gear.lshaft.position.x += pulleyDelta;
+        gear.rshaft.position.x += pulleyDelta;
+        gear.tshaft.position.x += pulleyDelta;
+
       break;
 
       case 8: //slider
@@ -269,8 +281,8 @@ function animate() {
   //                        settings_model['y'] * (Math.PI / 180),
   //                        settings_model['z'] * (Math.PI / 180));
 
-  if(gearIdx < numGearLimit)
-    loadGearBox();
+  // if(gearIdx < numGearLimit)
+  //   loadGearBox();
 
   render();
   stats.update();
@@ -286,40 +298,41 @@ function render() {
 
 function update() {
 
-  var originObj = gears[0].box;
-  var originPoint = originObj.position.clone();
+  if(gears[1] != undefined){ //at least two boxes for collision detection
+    var originObj = gears[0].box;
+    var originPoint = originObj.position.clone();
 
-  // console.log(originPoint)
-  var emptyMeshList = [];
-  var powerList = [];
+    // console.log(originPoint)
+    var emptyMeshList = [];
+    var powerList = [];
 
-  for(var i=1; i<gearIdx; i++){
-    powerList.push(gears[i].name);
+    for(var i=1; i<gearIdx; i++){
+      powerList.push(gears[i].name);
 
-    emptyMeshList.push(gears[i].left);
-    emptyMeshList.push(gears[i].right);
-    if(gears[i].top != undefined)
-        emptyMeshList.push(gears[i].top);
-  }
-
-  //collision detection
-  for (var vertexIndex = 0; vertexIndex < originObj.geometry.vertices.length; vertexIndex++){
-		var localVertex = originObj.geometry.vertices[vertexIndex].clone();
-		var globalVertex = localVertex.applyMatrix4( originObj.matrix );
-		var directionVector = globalVertex.sub( originObj.position );
-
-		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
-		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
-		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
-      powerList.forEach((power) => {
-          if(power != originObj.name) //&& (collisionOccured === false)){
-			     window.alert("Gearboxes are not compatible in power direction");
-          // console.log("collision")
-          //  collisionOccured = true
-        //  }
-      })
+      emptyMeshList.push(gears[i].left);
+      emptyMeshList.push(gears[i].right);
+      if(gears[i].top != undefined)
+          emptyMeshList.push(gears[i].top);
     }
-	}
 
+    //collision detection
+    for (var vertexIndex = 0; vertexIndex < originObj.geometry.vertices.length; vertexIndex++){
+  		var localVertex = originObj.geometry.vertices[vertexIndex].clone();
+  		var globalVertex = localVertex.applyMatrix4( originObj.matrix );
+  		var directionVector = globalVertex.sub( originObj.position );
 
+  		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+  		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
+  		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
+        powerList.forEach((power) => {
+            if(power != originObj.name) //&& (collisionOccured === false)){
+  			     window.alert("Gearboxes are not compatible in power direction");
+            // console.log("collision")
+            //  collisionOccured = true
+          //  }
+        })
+      }
+  	}
+
+  }
 }
