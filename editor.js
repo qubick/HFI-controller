@@ -169,19 +169,19 @@ function loadGearBox(gearType) {
   } //end of switch
 
   if (selectedGear === 2)
-    gearsElement.name = 'halfrotary'
+    gearsElement.powerType = 'halfrotary'
   else if(selectedGear === 1 || 3 || 4 || 5 || 6 || 9)
-    gearsElement.name = 'rotary'
+    gearsElement.powerType = 'rotary'
   else if (selectedGear === 7 || 8)
-    gearsElement.name = 'linear'
+    gearsElement.powerType = 'linear'
 
+  gearsElement.gearType = gearType;
   gearsElement.box.position.x += 150 * gearIdx;
   scene.add(gearsElement.box);
   objects.push(gearsElement.box);
 
 
   gears[gearIdx] = gearsElement;
-  // gears[gearIdx].position.x += 50 * gearIdx;
   gearIdx++;
 }
 
@@ -192,7 +192,7 @@ function animate() {
   //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
   //9:dfriction
   gears.forEach((gear, i) =>{
-    switch(i){// gearType){
+    switch(gear.gearType){// gearType){
       case 1: //jumper
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x += 0.01;
@@ -307,7 +307,7 @@ function update() {
     var powerList = [];
 
     for(var i=1; i<gearIdx; i++){
-      powerList.push(gears[i].name);
+      powerList.push(gears[i].powerType);
 
       emptyMeshList.push(gears[i].left);
       emptyMeshList.push(gears[i].right);
@@ -325,10 +325,9 @@ function update() {
   		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
   		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
         powerList.forEach((power) => {
-            if(power != originObj.name) //&& (collisionOccured === false)){
+            if(power != originObj.powerType) //&& (collisionOccured === false)){
   			     window.alert("Gearboxes are not compatible in power direction");
             // console.log("collision")
-            //  collisionOccured = true
           //  }
         })
       }
