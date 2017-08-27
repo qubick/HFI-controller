@@ -41,6 +41,7 @@ function createPanel(){
   //file upload
   panel.add(params, 'loadFile').name('Load 3D Model');
 
+  // panel.add(parms, ) //'kinemake' button
   //model params
   modelUI.add( settings.model, 'x', 0, 360, 1).listen();//.onFinishCahnge(()=>{}); //then update model scale
   modelUI.add( settings.model, 'y', 0, 360, 1).listen();;

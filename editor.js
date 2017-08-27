@@ -19,7 +19,7 @@ var directionList = [];
 var gears = [], gearsElement, gearIdx = 0;
 // var cam, crank, pusher; //etc
 var swingDelta = 0.01, camDelta = 0.01,
-    crankDelta = 0.25, pulleyDelta = 0.25, sliderDelta = 0.25;
+    crankDelta = 0.15, pulleyDelta = 0.25, sliderDelta = 0.25;
 
 init();
 animate();
@@ -56,16 +56,9 @@ function init() {
   scene.add( light );
 
 
-  //Ground
-  var plane = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry( 1000, 1000 ),
-    new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
-  );
-  plane.rotation.x = -Math.PI/2;
-  plane.position.y = -50;
-  scene.add( plane );
-
-  plane.receiveShadow = true;
+  var grid = new THREE.GridHelper( 1000, 100, 0x888888, 0xcccccc );
+  grid.position.set(0, -100, 0);
+  scene.add( grid );
 
 
   renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -76,6 +69,7 @@ function init() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   container.appendChild( renderer.domElement );
+
 
 
   // add models
@@ -120,70 +114,96 @@ function returnGearSelected(event){
 
 function loadGearBox(gearType) {
   // add gears
-  console.log("load gear box func() loaded")
+  console.log("curr gearType: ", gearType);
+  var loader = new THREE.STLLoader();
+  var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+
+  if(gearType < 3 ){ // 1 or 2
+    gearsElement = new Gears(2, gearType);
+
+    gearsElement.box.add(gearsElement.left); //to group move by drag
+    gearsElement.box.add(gearsElement.right);
+
+    gearsElement.powerType = (gearType === 1 ) ? 'rotary' : 'halfrotary';
+
+  }
+  else if((gearType > 2 ) || (gearType < 9)){
+    gearsElement = new Gears(3, gearType);
+
+    gearsElement.box.add(gearsElement.top); //to group move by drag
+    gearsElement.box.add(gearsElement.left);
+    gearsElement.box.add(gearsElement.right);
+    gearsElement.box.add(gearsElement.lshaft);
+    gearsElement.box.add(gearsElement.rshaft);
+    gearsElement.box.add(gearsElement.tshaft);
+
+    gearsElement.powerType = (gearType === (7 || 8)) ? 'linear' : 'rotary';
+
+    addPanel(); //add top bounding box UI
+  }
+
   switch(gearType){//gearType){
 
     case 1: //jumper
-      console.log("jumper is created")
     case 2: //swing
-      console.log("load gear with 2 bbox")
-      gearsElement = new Gears(2);
-
-      gearsElement.box.add(gearsElement.left); //to group move by drag
-      gearsElement.box.add(gearsElement.right);
-
-      removePanel();
+      //if(UI for top part is created)
+      //  removePanel()
     break;
 
-    case 3: //cam
-    case 4: //jumper_gear
-    case 5: //friction
+    case 3: //bevel
+      loader.load( './assets/bevel.stl', ( geometry ) => {
+
+      var lgear = new THREE.Mesh( geometry, material );
+      lgear.rotateY(Math.PI/2);
+      lgear.position.set(-25,0,0);
+      gearsElement.leftGear = lgear;
+      gearsElement.box.add(gearsElement.leftGear); // to drag as a group
+
+      var tgear = lgear.clone();
+      tgear.rotateX(Math.PI/2);
+      tgear.position.set(0,25,0);
+      gearsElement.topGear = tgear;
+      gearsElement.box.add(gearsElement.topGear);
+
+      });
+    break;
+
+    case 4: //cam
+      var diskGeometry = new THREE.CylinderGeometry( 10, 10, 7, 50 );
+      var disk = new THREE.Mesh( diskGeometry, material);
+
+      disk.rotateZ(Math.PI/2);
+      disk.scale.set(1, 1, 1.6);
+      // disk.position.set(0,100,0);
+      gearsElement.cam = disk;
+      gearsElement.box.add(gearsElement.cam);
+    break;
+
+    case 5: //dcam
     case 6: //crank
     case 7: //pulley
     case 8: //slider
-      console.log("load gear with 3 bbox")
-      gearsElement = new Gears(3);
 
-      gearsElement.box.add(gearsElement.top); //to group move by drag
-      gearsElement.box.add(gearsElement.left);
-      gearsElement.box.add(gearsElement.right);
-      gearsElement.box.add(gearsElement.lshaft);
-      gearsElement.box.add(gearsElement.rshaft);
-      gearsElement.box.add(gearsElement.tshaft);
-
-      addPanel(); //add top bounding box UI
     break;
 
     case 9: //double_friction
       gearsElement = new Gears(5);
-
-      gears[gearIdx].box.add(gears[gearIdx].top); //to group move by drag
-      gears[gearIdx].box.add(gears[gearIdx].left);
-      gears[gearIdx].box.add(gears[gearIdx].right);
-      gears[gearIdx].box.add(gears[gearIdx].front);
-      gears[gearIdx].box.add(gears[gearIdx].back);
-
     break;
 
     default:
       console.log("in switch case")
   } //end of switch
 
-  if (selectedGear === 2)
-    gearsElement.powerType = 'halfrotary'
-  else if(selectedGear === 1 || 3 || 4 || 5 || 6 || 9)
-    gearsElement.powerType = 'rotary'
-  else if (selectedGear === 7 || 8)
-    gearsElement.powerType = 'linear'
-
   gearsElement.gearType = gearType;
-  gearsElement.box.position.x += 150 * gearIdx;
+  gearsElement.box.position.x += 160 * gearIdx;
+  gears[gearIdx] = gearsElement;
+  gearIdx++;
+
   scene.add(gearsElement.box);
   objects.push(gearsElement.box);
 
 
-  gears[gearIdx] = gearsElement;
-  gearIdx++;
+  console.log("at the end of loadGearBox()", gearsElement)
 }
 
 function animate() {
@@ -208,7 +228,27 @@ function animate() {
         gear.right.rotation.x += swingDelta;
       break;
 
-      case 3: //cam
+      case 3: //bevel gear
+        gear.top.rotation.y += 0.01;
+        gear.topGear.rotation.z += 0.01;
+        gear.left.rotation.x += 0.01;
+        gear.leftGear.rotation.x += 0.01;
+        gear.right.rotation.x += 0.01;
+      break;
+
+      case 4: //cam
+        var topPos = gear.top.position.y;
+        if((topPos > gear.box.position.y + 75) || (topPos < gear.box.position.y + 50)) //original pos+=50, w/2=25
+          crankDelta *= -1;
+
+        gear.top.position.y += crankDelta; //should be updown
+        gear.tshaft.position.y += crankDelta;
+        gear.left.rotation.x += 0.01;
+        gear.right.rotation.x += 0.01;
+        gear.cam.rotation.x += 0.01;
+      break;
+
+      case 5: //dcam
         var rotAngle = gear.top.rotation.y;
         if((rotAngle < 0) || (rotAngle > 180 * Math.PI/180)){
           camDelta *= -1;
@@ -218,25 +258,8 @@ function animate() {
         gear.right.rotation.x += 0.01;
       break;
 
-      case 4: //jumper gear
-        gear.top.position.y += 0.01; //should be up down
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x += 0.01;
-      break;
-
-      case 5: //friction gear
-        gear.top.position.y += 0.01;
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x -= 0.01;
-      break;
-
-      case 6: //crank
-        var topPos = gear.top.position.y;
-        if((topPos > gear.box.position.y + 75) || (topPos < gear.box.position.y + 50)) //original pos+=50, w/2=25
-          crankDelta *= -1;
-
-        gear.top.position.y += crankDelta; //should be updown
-        gear.tshaft.position.y += crankDelta;
+      case 6: //friction gear
+        gear.top.rotation.y += 0.01;
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x -= 0.01;
       break;
@@ -245,32 +268,25 @@ function animate() {
         var leverPos = gear.top.position.x + (160 * i); //base position
         if((leverPos < gear.box.position.x - 10) || (leverPos > gear.box.position.x + 10)) //original pos+=50, w/2=25
           pulleyDelta *= -1;
-
-        gear.top.position.x += pulleyDelta;
-        gear.left.position.x += pulleyDelta;
-        gear.right.position.x += pulleyDelta;
-        gear.lshaft.position.x += pulleyDelta;
-        gear.rshaft.position.x += pulleyDelta;
-        gear.tshaft.position.x += pulleyDelta;
-
       break;
 
       case 8: //slider
         var leverPos = gear.left.position.x;
         if((leverPos <= gear.box.position.x - 75) || (leverPos >= gear.box.position.x - 25)) //original pos+=50, w/2=25
-          sliderDelta *= -1;
+        sliderDelta *= -1;
 
         gear.top.position.x += 0.01; //should change the direction
         gear.left.position.x += sliderDelta;
         gear.right.position.x += sliderDelta;
       break;
 
-      case 9: //double_friction_wheel
-        gear.top.rotation.y += 0.01; //should change the direction
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x -= 0.01;
-        gear.front.rotation.z += 0.01;
-        gear.back.rotation.z -= 0.01;
+      case 9: //double_friction
+        gear.top.position.x += pulleyDelta;
+        gear.left.position.x += pulleyDelta;
+        gear.right.position.x += pulleyDelta;
+        gear.lshaft.position.x += pulleyDelta;
+        gear.rshaft.position.x += pulleyDelta;
+        gear.tshaft.position.x += pulleyDelta;
       break;
 
       default:

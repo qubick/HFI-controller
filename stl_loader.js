@@ -1,32 +1,32 @@
+var meshToReturn;
+
 function loadSTLModel(filename, filetype) {
 
-
   var loader = new THREE.STLLoader();
-  // var mesh;
 
   // ASCII file
   if(filetype === 'ascii'){
     loader.load( filename, function ( geometry ) {
 
       var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
-      var mesh = new THREE.Mesh( geometry, material );
+      this.mesh = new THREE.Mesh( geometry, material );
 
-      mesh.position.set( 0, - 0.25, 0.6 );
-      mesh.rotation.set( 0, - Math.PI / 2, 0 );
+      // mesh.position.set( 0, - 0.25, 0.6 );
+      // mesh.rotation.set( 0, - Math.PI / 2, 0 );
       // mesh.scale.set( 50, 50, 50 );
 
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
-      scene.add( mesh );
+      //scene.add( mesh );
       objects.push( mesh ); //objects from editor
 
-      // stlModel = new THREE.Geometry().fromBufferGeometry( mesh );
+      // meshToReturn = new THREE.Geometry().fromBufferGeometry( mesh );
       // cosole.log("StlModel: ", stlModel);
-      stlModel = mesh;
 
-      // return mesh;
     } );
+
+    // return mesh;
   }
 
 
@@ -87,10 +87,9 @@ function loadSTLModel(filename, filetype) {
       mesh.receiveShadow = true;
 
       // scene.add( mesh );
-      return mesh;
     } );
   }
 
-
-
+  console.log("stl_loader: ", meshToReturn)
+  return meshToReturn;
 }

@@ -1,18 +1,29 @@
-function Gears(numBbox) {
-
+function Gears(numBbox, gearType) {
+	var newGeometry;
 	var mesh = [];
 
-	// var material = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff, transparent: true } );
+	//STL loader
+	var loader = new THREE.STLLoader();
+	var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+	var gearSTL;
+
 	var material1 = new THREE.MeshStandardMaterial( {
-		color: 0x008080,
+		// color: 0x008080,
 		opacity: 50,
-		premultipliedAlpha: true,
+		// premultipliedAlpha: true,
 		transparent: true
 	} );
 
 	var material2 = new THREE.MeshBasicMaterial({
 			color: 0x00ffff,
 			wireframe: true
+	});
+
+	var material3 = new THREE.MeshNormalMaterial({
+		color: 0x008080,
+		opacity: 50,
+		premultipliedAlpha: true,
+		transparent: true
 	});
 
 	var boxGeometry = new THREE.CubeGeometry( 50, 50, 50 );
@@ -33,6 +44,8 @@ function Gears(numBbox) {
 	rightShaft.rotateZ(Math.PI/2);
 	rightShaft.position.set( 25, 0, 0);
 
+
+	console.log("in gear_units: load with numbox == ", numBbox)
 	// # of bbox === 2
 	if( numBbox === 2 ){
 
@@ -85,5 +98,39 @@ function Gears(numBbox) {
 		}
 
 	}
+
+	// switch (gearType) {
+	// 	case 1: //jumper
+	// 		//no gear
+	// 	break;
+	//
+	// 	case 2: //swing
+	// 		//no gear
+	// 	break;
+	//
+	// 	case 3: //bevel
+	//
+	// 		console.log("load bevel")
+	// 		console.log("newGeometry: ", newGeometry)
+	//
+	//
+	// 	break;
+	//
+	// 	case 4: //cam
+	// 	break;
+	//
+	// 	case 5: //dcam
+	// 	break;
+	//
+	// 	case 6: //friction
+	// 	break;
+	//
+	// 	case 7:
+	// 	case 8:
+	// 	case 9:
+	//
+	// 	default:
+	//
+	// }
 	return mesh;
 }
