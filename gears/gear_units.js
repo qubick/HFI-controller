@@ -8,8 +8,8 @@ function Gears(numBbox, gearType) {
 	var gearSTL;
 
 	var material1 = new THREE.MeshStandardMaterial( {
-		// color: 0x008080,
-		opacity: 50,
+		color: 0x008080,
+		opacity: 0.5,
 		// premultipliedAlpha: true,
 		transparent: true
 	} );
@@ -17,13 +17,6 @@ function Gears(numBbox, gearType) {
 	var material2 = new THREE.MeshBasicMaterial({
 			color: 0x00ffff,
 			wireframe: true
-	});
-
-	var material3 = new THREE.MeshNormalMaterial({
-		color: 0x008080,
-		opacity: 50,
-		premultipliedAlpha: true,
-		transparent: true
 	});
 
 	var boxGeometry = new THREE.CubeGeometry( 50, 50, 50 );

@@ -71,6 +71,21 @@ function init() {
   container.appendChild( renderer.domElement );
 
 
+  var changed = false;
+
+  controls.addEventListener( 'change', function() {
+    // moved = true;
+  } );
+
+  window.addEventListener( 'mousedown', function () {
+    changed = false;
+
+  }, false );
+
+  window.addEventListener( 'mouseup', function() {
+
+  });
+
 
   // add models
   // loadSTLModel('./models/makefairbot.stl', 'ascii');
@@ -155,13 +170,13 @@ function loadGearBox(gearType) {
 
       var lgear = new THREE.Mesh( geometry, material );
       lgear.rotateY(Math.PI/2);
-      lgear.position.set(-25,0,0);
+      lgear.position.set(-15,0,0);
       gearsElement.leftGear = lgear;
       gearsElement.box.add(gearsElement.leftGear); // to drag as a group
 
       var tgear = lgear.clone();
       tgear.rotateX(Math.PI/2);
-      tgear.position.set(0,25,0);
+      tgear.position.set(0,15,0);
       gearsElement.topGear = tgear;
       gearsElement.box.add(gearsElement.topGear);
 
@@ -230,7 +245,7 @@ function animate() {
 
       case 3: //bevel gear
         gear.top.rotation.y += 0.01;
-        gear.topGear.rotation.z += 0.01;
+        gear.topGear.rotation.z -= 0.01;
         gear.left.rotation.x += 0.01;
         gear.leftGear.rotation.x += 0.01;
         gear.right.rotation.x += 0.01;
@@ -339,10 +354,10 @@ function update() {
   		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
   		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
         powerList.forEach((power) => {
-            if(power != originObj.powerType) //&& (collisionOccured === false)){
+            if((power != originObj.powerType) && changed) {//&& (collisionOccured === false)){
   			     window.alert("Gearboxes are not compatible in power direction");
-            // console.log("collision")
-          //  }
+             changed = false;
+           }
         })
       }
   	}
