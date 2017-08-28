@@ -8,6 +8,8 @@ var originObj, originPoint;
 var stlModel;
 var selectedGear;
 
+var currHorizontalRotation;
+
 //variables for rotation direction simulator
 var newPower, curPower = 'rotary', conflict = false; //should be returned by the first gear
 var collisionOccured = false, collidableMeshList = [];
@@ -33,7 +35,7 @@ function init() {
   container = document.createElement( 'div' );
   document.body.appendChild( container );
   camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
-  camera.position.z = 1000;
+  camera.position.z = 500;
 
   scene = new THREE.Scene();
   scene.add( new THREE.AmbientLight( 0x505050 ) );
@@ -141,6 +143,10 @@ function loadGearBox(gearType) {
 
     gearsElement.powerType = (gearType === 1 ) ? 'rotary' : 'halfrotary';
 
+    if(gears[0]){
+      gearsElement.left.rotation.x = gears[0].left.rotation.x;
+      gearsElement.right.rotation.x = gears[0].right.rotation.x;
+    }
   }
   else if((gearType > 2 ) || (gearType < 9)){
     gearsElement = new Gears(3, gearType);
@@ -154,6 +160,10 @@ function loadGearBox(gearType) {
 
     gearsElement.powerType = (gearType === (7 || 8)) ? 'linear' : 'rotary';
 
+    if(gears[0]){
+      gearsElement.left.rotation.x = gears[0].left.rotation.x;
+      gearsElement.right.rotation.x = gears[0].right.rotation.x;
+    }
     addPanel(); //add top bounding box UI
   }
 
@@ -234,7 +244,6 @@ function loadGearBox(gearType) {
         tgear.position.set(0,15,0);
         gearsElement.topGear = tgear;
         gearsElement.box.add(gearsElement.topGear);
-
       });
     break;
 
@@ -285,7 +294,6 @@ function animate() {
       break;
 
       case 3: //bevel gear
-      console.log(gear)
         gear.top.rotation.y += 0.01;
         gear.topGear.rotation.z -= 0.01;
         gear.left.rotation.x += 0.01;
