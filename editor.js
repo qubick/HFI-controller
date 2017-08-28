@@ -285,6 +285,7 @@ function animate() {
       break;
 
       case 3: //bevel gear
+      console.log(gear)
         gear.top.rotation.y += 0.01;
         gear.topGear.rotation.z -= 0.01;
         gear.left.rotation.x += 0.01;

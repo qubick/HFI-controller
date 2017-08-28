@@ -12,13 +12,13 @@ function loadSTLModel(filename, filetype) {
       this.mesh = new THREE.Mesh( geometry, material );
 
       // mesh.position.set( 0, - 0.25, 0.6 );
-      // mesh.rotation.set( 0, - Math.PI / 2, 0 );
+      mesh.rotation.set( - Math.PI / 2, 0, 0 );
       // mesh.scale.set( 50, 50, 50 );
 
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
-      //scene.add( mesh );
+      scene.add( mesh );
       objects.push( mesh ); //objects from editor
 
       // meshToReturn = new THREE.Geometry().fromBufferGeometry( mesh );
