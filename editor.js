@@ -8,7 +8,7 @@ var originObj, originPoint;
 var stlModel;
 var selectedGear;
 
-var currHorizontalRotation;
+var latestGearRotation = 1, rotationChanged = 0, rotationChangedId; //positive
 
 //variables for rotation direction simulator
 var newPower, curPower = 'rotary', conflict = false; //should be returned by the first gear
@@ -88,13 +88,6 @@ function init() {
 
   });
 
-
-  // add models
-  // loadSTLModel('./models/makefairbot.stl', 'ascii');
-
-  // load gears
-  // loadGearBox();
-
   if (curPower != newPower)
     conflict = true; //function to prompt conflict
 
@@ -144,8 +137,8 @@ function loadGearBox(gearType) {
     gearsElement.powerType = (gearType === 1 ) ? 'rotary' : 'halfrotary';
 
     if(gears[0]){
-      gearsElement.left.rotation.x = gears[0].left.rotation.x;
-      gearsElement.right.rotation.x = gears[0].right.rotation.x;
+      gearsElement.left.rotation.x = gears[gearIdx-1].right.rotation.x;
+      gearsElement.right.rotation.x = gears[gearIdx-1].right.rotation.x;
     }
   }
   else if((gearType > 2 ) || (gearType < 9)){
@@ -161,8 +154,8 @@ function loadGearBox(gearType) {
     gearsElement.powerType = (gearType === (7 || 8)) ? 'linear' : 'rotary';
 
     if(gears[0]){
-      gearsElement.left.rotation.x = gears[0].left.rotation.x;
-      gearsElement.right.rotation.x = gears[0].right.rotation.x;
+      gearsElement.left.rotation.x = gears[gearIdx-1].right.rotation.x;
+      gearsElement.right.rotation.x = gears[gearIdx-1].right.rotation.x;
     }
     addPanel(); //add top bounding box UI
   }
@@ -245,6 +238,9 @@ function loadGearBox(gearType) {
         gearsElement.topGear = tgear;
         gearsElement.box.add(gearsElement.topGear);
       });
+
+      latestGearRotation = -1; //negative
+      rotationChangedId = gearIdx;
     break;
 
     case 7: //pulley
@@ -267,21 +263,21 @@ function loadGearBox(gearType) {
   scene.add(gearsElement.box);
   objects.push(gearsElement.box);
 
-
-  console.log("at the end of loadGearBox()", gearsElement)
 }
 
 function animate() {
   requestAnimationFrame( animate );
 
-  //1:jumper, 2:swing,
-  //3:bevel, 4:crank, 5:doublecam, 7: pulley, 8:slider
-  //9:dfriction
   gears.forEach((gear, i) =>{
     switch(gear.gearType){// gearType){
       case 1: //jumper
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x += 0.01;
+        var rotationDirection = 0.01;
+
+        if((latestGearRotation === -1) && (i > rotationChangedId))
+          rotationDirection *= -1;
+
+        gear.left.rotation.x += rotationDirection;
+        gear.right.rotation.x += rotationDirection;
       break;
 
       case 2: //swing
@@ -289,16 +285,24 @@ function animate() {
         if((rotAngle < 0) || (rotAngle > 180 * Math.PI/180)){
           swingDelta *= -1;
         }
+        if((latestGearRotation === -1) && (i > rotationChangedId))
+          swingDelta *= -1;
+
         gear.left.rotation.x += swingDelta;
         gear.right.rotation.x += swingDelta;
       break;
 
       case 3: //bevel gear
-        gear.top.rotation.y += 0.01;
-        gear.topGear.rotation.z -= 0.01;
-        gear.left.rotation.x += 0.01;
-        gear.leftGear.rotation.x += 0.01;
-        gear.right.rotation.x += 0.01;
+        var rotationDirection = 0.01;
+
+        if((latestGearRotation === -1) && (i > rotationChangedId))
+          rotationDirection *= -1;
+
+        gear.top.rotation.y += rotationDirection;
+        gear.topGear.rotation.z -= rotationDirection;
+        gear.left.rotation.x += rotationDirection;
+        gear.leftGear.rotation.x += rotationDirection;
+        gear.right.rotation.x += rotationDirection;
       break;
 
       case 4: //crank
@@ -306,11 +310,15 @@ function animate() {
         if((topPos > gear.box.position.y + 75) || (topPos < gear.box.position.y + 50)) //original pos+=50, w/2=25
           crankDelta *= -1;
 
+        var rotationDirection = 0.01;
+        if((latestGearRotation === -1) && (i > rotationChangedId))
+          rotationDirection *= -1;
+
         gear.top.position.y += crankDelta; //should be updown
         gear.tshaft.position.y += crankDelta;
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x += 0.01;
-        gear.cam.rotation.x += 0.01;
+        gear.left.rotation.x += rotationDirection;
+        gear.right.rotation.x += rotationDirection;
+        gear.cam.rotation.x += rotationDirection;
       break;
 
       case 5: //dcam
@@ -318,20 +326,29 @@ function animate() {
         if((rotAngle < 0) || (rotAngle > Math.PI)){
           camDelta *= -1;
         }
+
+        var rotationDirection = 0.01;
+        if((latestGearRotation === -1) && (i > rotationChangedId))
+          rotationDirection *= -1;
+
         gear.top.rotation.y += camDelta; //should be half rotation
-        gear.left.rotation.x += 0.01;
-        gear.right.rotation.x += 0.01;
-        gear.cam1.rotation.x += 0.01;
-        gear.cam2.rotation.x += 0.01;
+        gear.left.rotation.x += rotationDirection;
+        gear.right.rotation.x += rotationDirection;
+        gear.cam1.rotation.x += rotationDirection;
+        gear.cam2.rotation.x += rotationDirection;
       break;
 
       case 6: //friction gear
-        gear.top.rotation.y += 0.01;
-        gear.topGear.rotation.z -= 0.01;
-        gear.left.rotation.x += 0.01;
-        gear.leftGear.rotation.x += 0.01;
-        gear.right.rotation.x -= 0.01;
-        gear.rightGear.rotation.x -= 0.01;
+        var rotationDirection = 0.01;
+        if((latestGearRotation === -1) && (i > rotationChangedId))
+          rotationDirection *= -1;
+
+        gear.top.rotation.y += rotationDirection;
+        gear.topGear.rotation.z -= rotationDirection;
+        gear.left.rotation.x += rotationDirection;
+        gear.leftGear.rotation.x += rotationDirection;
+        gear.right.rotation.x -= rotationDirection;
+        gear.rightGear.rotation.x -= rotationDirection;
       break;
 
       case 7: //pulley
@@ -363,10 +380,6 @@ function animate() {
     } //EO Switch
 
   });
-
-  // stlModel.rotation.set( settings_model['x'] * (Math.PI / 180),
-  //                        settings_model['y'] * (Math.PI / 180),
-  //                        settings_model['z'] * (Math.PI / 180));
 
   render();
   stats.update();
