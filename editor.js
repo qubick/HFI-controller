@@ -34,15 +34,6 @@ function init() {
   document.body.appendChild( container );
   camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
   camera.position.z = 1000;
-  controls = new THREE.TrackballControls( camera );
-  controls.rotateSpeed = 1.0;
-  controls.zoomSpeed = 1.2;
-  controls.panSpeed = 0.8;
-  controls.noZoom = false;
-  controls.noPan = false;
-  controls.staticMoving = true;
-  controls.dynamicDampingFactor = 0.3;
-
 
   scene = new THREE.Scene();
   scene.add( new THREE.AmbientLight( 0x505050 ) );
@@ -69,6 +60,15 @@ function init() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   container.appendChild( renderer.domElement );
+
+  controls = new THREE.TrackballControls( camera, renderer.domElement );
+  controls.rotateSpeed = 1.0;
+  controls.zoomSpeed = 1.2;
+  controls.panSpeed = 0.8;
+  controls.noZoom = false;
+  controls.noPan = false;
+  controls.staticMoving = true;
+  controls.dynamicDampingFactor = 0.3;
 
 
   var changed = false;
@@ -168,17 +168,17 @@ function loadGearBox(gearType) {
     case 3: //bevel
       loader.load( './assets/bevel.stl', ( geometry ) => {
 
-      var lgear = new THREE.Mesh( geometry, material );
-      lgear.rotateY(Math.PI/2);
-      lgear.position.set(-15,0,0);
-      gearsElement.leftGear = lgear;
-      gearsElement.box.add(gearsElement.leftGear); // to drag as a group
+        var lgear = new THREE.Mesh( geometry, material );
+        lgear.rotateY(Math.PI/2);
+        lgear.position.set(-15,0,0);
+        gearsElement.leftGear = lgear;
+        gearsElement.box.add(gearsElement.leftGear); // to drag as a group
 
-      var tgear = lgear.clone();
-      tgear.rotateX(Math.PI/2);
-      tgear.position.set(0,15,0);
-      gearsElement.topGear = tgear;
-      gearsElement.box.add(gearsElement.topGear);
+        var tgear = lgear.clone();
+        tgear.rotateX(Math.PI/2);
+        tgear.position.set(0,15,0);
+        gearsElement.topGear = tgear;
+        gearsElement.box.add(gearsElement.topGear);
 
       });
     break;
@@ -195,10 +195,51 @@ function loadGearBox(gearType) {
     break;
 
     case 5: //dcam
+      var diskGeometry = new THREE.CylinderGeometry( 10, 10, 7, 50 );
+      var disk1 = new THREE.Mesh( diskGeometry, material);
+      disk2 = disk1.clone();
+
+      disk1.rotateZ(Math.PI/2);
+      disk1.scale.set(1, 1, 1.3);
+      disk1.position.set(-10, 10, 0);
+
+      disk2.rotateZ(Math.PI/2);
+      disk2.scale.set(1, 1, 1.3);
+      disk2.position.set(10, -10, 0);
+
+      gearsElement.cam1 = disk1;
+      gearsElement.cam2 = disk2;
+
+      gearsElement.box.add(gearsElement.cam1);
+      gearsElement.box.add(gearsElement.cam2);
+    break;
+
     case 6: //crank
+      loader.load( './assets/bevel.stl', ( geometry ) => {
+
+        var lgear = new THREE.Mesh( geometry, material );
+        lgear.rotateY(Math.PI/2);
+        lgear.position.set(-15, 0, 0);
+        gearsElement.leftGear = lgear;
+        gearsElement.box.add(gearsElement.leftGear); // to drag as a group
+
+        var rgear = lgear.clone();
+        rgear.rotateY(Math.PI);
+        rgear.position.set(15, 0, 0);
+        gearsElement.rightGear = rgear;
+        gearsElement.box.add(gearsElement.rightGear);
+
+        var tgear = lgear.clone();
+        tgear.rotateX(Math.PI/2);
+        tgear.position.set(0,15,0);
+        gearsElement.topGear = tgear;
+        gearsElement.box.add(gearsElement.topGear);
+
+      });
+    break;
+
     case 7: //pulley
     case 8: //slider
-
     break;
 
     case 9: //double_friction
@@ -225,7 +266,7 @@ function animate() {
   requestAnimationFrame( animate );
 
   //1:jumper, 2:swing,
-  //3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
+  //3:bevel, 4:crank, 5:doublecam, 7: pulley, 8:slider
   //9:dfriction
   gears.forEach((gear, i) =>{
     switch(gear.gearType){// gearType){
@@ -251,7 +292,7 @@ function animate() {
         gear.right.rotation.x += 0.01;
       break;
 
-      case 4: //cam
+      case 4: //crank
         var topPos = gear.top.position.y;
         if((topPos > gear.box.position.y + 75) || (topPos < gear.box.position.y + 50)) //original pos+=50, w/2=25
           crankDelta *= -1;
@@ -265,18 +306,23 @@ function animate() {
 
       case 5: //dcam
         var rotAngle = gear.top.rotation.y;
-        if((rotAngle < 0) || (rotAngle > 180 * Math.PI/180)){
+        if((rotAngle < 0) || (rotAngle > Math.PI)){
           camDelta *= -1;
         }
         gear.top.rotation.y += camDelta; //should be half rotation
         gear.left.rotation.x += 0.01;
         gear.right.rotation.x += 0.01;
+        gear.cam1.rotation.x += 0.01;
+        gear.cam2.rotation.x += 0.01;
       break;
 
       case 6: //friction gear
         gear.top.rotation.y += 0.01;
+        gear.topGear.rotation.z -= 0.01;
         gear.left.rotation.x += 0.01;
+        gear.leftGear.rotation.x += 0.01;
         gear.right.rotation.x -= 0.01;
+        gear.rightGear.rotation.x -= 0.01;
       break;
 
       case 7: //pulley

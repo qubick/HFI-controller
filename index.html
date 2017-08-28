@@ -112,8 +112,6 @@
 					<div>
 						<img src="assets/slider.png" name="8" class="draggable"/>
 					</div>
-
-
 			</div>
 
 			<script type="text/javascript">
@@ -122,10 +120,11 @@
 					helper: 'clone',
 					cursor: 'move',
 					// tolerance: 'fit',
-					// // stack: '.drag',
+					// stack: '.drag',
 					revert: "invalid",
 					refrecshPositions: true,
 				});
+
 				$(".droppable").droppable({
 				  drop: function(event, ui) {
 						console.log(event)
