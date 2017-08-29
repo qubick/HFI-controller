@@ -15,17 +15,14 @@ var newPower, curPower = 'rotary', conflict = false; //should be returned by the
 var collisionOccured = false, collidableMeshList = [];
 var directionList = [];
 
-//1:jumper, 2:swing,
-//3:cam, 4:jumper_gear, 5:friction, 6:crank, 7: pulley, 8:slider
-//9:dfriction
+
 var gears = [], gearsElement, gearIdx = 0;
-// var cam, crank, pusher; //etc
+//to animate gear mechanisms
 var swingDelta = 0.01, camDelta = 0.01,
     crankDelta = 0.15, pulleyDelta = 0.25, sliderDelta = 0.25;
 
 init();
 animate();
-
 
 function init() {
 

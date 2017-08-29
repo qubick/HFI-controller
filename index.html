@@ -40,7 +40,25 @@
 						position: fixed;
 						top: 0;
 						right: 0;
-						width: 3000px;
+						width: 300px;
+						height: 100px;
+						background-color: grey;
+						display: none;
+					}
+					#loadSTL {
+						position: fixed;
+						top: 105px;
+						right: 0;
+						width: 300px;
+						height: 60px;
+						background-color: grey;
+						display: none;
+					}
+					#model_rotation {
+						position: fixed;
+						top: 170px;
+						right: 0;
+						width: 300px;
 						height: 100px;
 						background-color: grey;
 						display: none;
@@ -60,8 +78,19 @@
 					.box__error {
 					  display: none;
 					}
-					img {
+					.draggable {
 						width:150px;
+					}
+
+					.btn {
+				    background-color: #555555; /* Green */
+				    border: none;
+				    color: white;
+				    padding: 5px 10px;
+				    text-align: center;
+				    text-decoration: none;
+				    display: inline-block;
+				    font-size: 14px;
 					}
 				</style>
 
@@ -152,8 +181,28 @@
 
 			<!-- menu -->
 			<div id="bbox_shape">
-
+				Bounding Box Shape <br/>
+				<div align="center" valign="center">
+					<img src="assets/cube.png" width="70px" height="70px">
+					<img src="assets/sphere.png" width="70px" height="70px">
+					<img src="assets/cylinder.png" width="70px" height="70px">
+				</div>
 			</div>
+
+			<!-- <div id="loadSTL">
+				Load a Host Model <br/>
+				<button type="button" id="stl" onchange="browseSTL()" class="btn">Load STL</button>
+				<button type="button" id="craftml" onchange="browseCraftML()" class="btn">Search CraftML</button>
+			<div> -->
+
+			<!-- <div id="model_rotation">
+				Host Model rotation <br/>
+				<div>
+					X: <input type="range" min="0" max="360" step="1" value="0" width="280px"> <br/>
+					Y: <input type="range" min="0" max="360" step="1" value="0" data-orientation="vertical" width="280px"> <br/>
+					Z: <input type="range" min="0" max="360" step="1" value="0" data-orientation="vertical" width="280px">
+				</div>
+			</div> -->
 
 			<input id="myInput" type="file" style="visibility:hidden" />
 		</body>

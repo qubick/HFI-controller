@@ -73,6 +73,7 @@ function removePanel(gearType){
 }
 
 function showDiv() {
-  console.log("showDiv")
-   document.getElementById('bbox_shape').style.display = "block";
+  document.getElementById('bbox_shape').style.display = "block";
+  // document.getElementById('loadSTL').style.display = "block";
+  // document.getElementById('model_rotation').style.display = "block";
 }
