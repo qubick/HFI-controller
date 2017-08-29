@@ -128,6 +128,7 @@ function loadGearBox(gearType) {
   var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
 
   if(gearType < 3 ){ // 1 or 2
+
     gearsElement = new Gears(2, gearType);
 
     gearsElement.box.add(gearsElement.left); //to group move by drag
@@ -139,8 +140,11 @@ function loadGearBox(gearType) {
       gearsElement.left.rotation.x = gears[gearIdx-1].right.rotation.x;
       gearsElement.right.rotation.x = gears[gearIdx-1].right.rotation.x;
     }
+    addLRScalePanel();
+    
   }
   else if((gearType > 2 ) || (gearType < 9)){
+
     gearsElement = new Gears(3, gearType);
 
     gearsElement.box.add(gearsElement.top); //to group move by drag
@@ -156,7 +160,9 @@ function loadGearBox(gearType) {
       gearsElement.left.rotation.x = gears[gearIdx-1].right.rotation.x;
       gearsElement.right.rotation.x = gears[gearIdx-1].right.rotation.x;
     }
-    addPanel(); //add top bounding box UI
+
+    addLRScalePanel();
+    addTopScalePanel(); //add top bounding box UI
   }
 
   //add gear dependent mechanism
