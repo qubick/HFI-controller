@@ -30,9 +30,19 @@ var params = {
   loadFile: function(){
     document.getElementById("myInput").click();
     loadSTLModel('./models/makefairbot.stl', 'ascii');
+
+    // if( !modelLoaded ){
+      modelUI.add( settings.model, 'x', 0, 360, 1).listen();//.onFinishCahnge(()=>{}); //then update model scale
+      modelUI.add( settings.model, 'y', 0, 360, 1).listen();
+      modelUI.add( settings.model, 'z', 0, 360, 1).listen();
+    //   modelLoaded = true;
+    // }
   },
   Kinemake:function() {
     console.log("clicked")
+  },
+  export: function(){
+    console.log("export stl")
   }
 }
 
@@ -44,18 +54,10 @@ var modelUI = panel.addFolder( 'Model Rotation' );
 function createPanel(){
   //file upload
   panel.add(params, 'loadFile').name('Load 3D Model');
-
-  if( !modelLoaded ){
-    //model params
-    modelUI.add( settings.model, 'x', 0, 360, 1).listen();//.onFinishCahnge(()=>{}); //then update model scale
-    modelUI.add( settings.model, 'y', 0, 360, 1).listen();
-    modelUI.add( settings.model, 'z', 0, 360, 1).listen();
-  }
-
   panel.add(params, 'Kinemake');
+  panel.add(params, 'export').name('Export to STL');
 
   modelUI.open();
-
 }
 
 function addLRScalePanel(gearType){
