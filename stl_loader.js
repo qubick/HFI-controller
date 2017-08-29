@@ -21,12 +21,7 @@ function loadSTLModel(filename, filetype) {
       scene.add( mesh );
       objects.push( mesh ); //objects from editor
 
-      // meshToReturn = new THREE.Geometry().fromBufferGeometry( mesh );
-      // cosole.log("StlModel: ", stlModel);
-
     } );
-
-    // return mesh;
   }
 
 
@@ -46,7 +41,7 @@ function loadSTLModel(filename, filetype) {
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
-      // scene.add( mesh );
+      scene.add( mesh );
 
     } );
 
@@ -61,7 +56,7 @@ function loadSTLModel(filename, filetype) {
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
-      // scene.add( mesh );
+      scene.add( mesh );
 
     } );
   }
@@ -86,7 +81,7 @@ function loadSTLModel(filename, filetype) {
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
-      // scene.add( mesh );
+      scene.add( mesh );
     } );
   }
 

@@ -71,3 +71,8 @@ function removePanel(gearType){
   topBoxUI.close();
   delete topBoxUI;
 }
+
+function showDiv() {
+  console.log("showDiv")
+   document.getElementById('bbox_shape').style.display = "block";
+}

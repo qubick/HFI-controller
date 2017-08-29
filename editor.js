@@ -120,6 +120,8 @@ function returnGearSelected(event){
   selectedGear = event.target.name;
   console.log("selected Gear: ", selectedGear);
   loadGearBox(parseInt(selectedGear));
+
+  showDiv();
 }
 
 function loadGearBox(gearType) {
@@ -160,6 +162,7 @@ function loadGearBox(gearType) {
     addPanel(); //add top bounding box UI
   }
 
+  //add gear dependent mechanism
   switch(gearType){//gearType){
 
     case 1: //jumper
@@ -182,7 +185,6 @@ function loadGearBox(gearType) {
         tgear.position.set(0,15,0);
         gearsElement.topGear = tgear;
         gearsElement.box.add(gearsElement.topGear);
-
       });
     break;
 
