@@ -6,21 +6,16 @@ function loadSTLModel(filename, filetype) {
 
   // ASCII file
   if(filetype === 'ascii'){
-    loader.load( filename, function ( geometry ) {
+    loader.load( filename, ( geometry ) => {
 
       var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
-      this.mesh = new THREE.Mesh( geometry, material );
+      // this.mesh = new THREE.Mesh( geometry, material );
 
-      // mesh.position.set( 0, - 0.25, 0.6 );
-      mesh.rotation.set( - Math.PI / 2, 0, 0 );
-      // mesh.scale.set( 50, 50, 50 );
-
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-
-      scene.add( mesh );
-      objects.push( mesh ); //objects from editor
-
+      meshToReturn = new THREE.Mesh(geometry, material);
+      meshToReturn.rotation.set( - Math.PI / 2, 0, 0 );
+      //
+      // this.mesh.castShadow = true;
+      // this.mesh.receiveShadow = true;
     } );
   }
 
@@ -65,7 +60,7 @@ function loadSTLModel(filename, filetype) {
   // Colored binary STL
   if(filetype === 'color_binary'){
 
-    loader.load( filename, function ( geometry ) {
+    loader.load( filename, ( geometry ) => {
 
       var meshMaterial = material;
       if (geometry.hasColors) {
@@ -86,5 +81,6 @@ function loadSTLModel(filename, filetype) {
   }
 
   console.log("stl_loader: ", meshToReturn)
-  return meshToReturn;
+  if(meshToReturn)
+    return meshToReturn;
 }

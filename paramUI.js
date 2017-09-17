@@ -9,6 +9,7 @@ var settings = {
     'y': 0.0,
     'z': 0.0
   },
+  modelScale: 0.0,
   leftBbox: {
     'x': 0.0,
     'y': 0.0,
@@ -25,30 +26,37 @@ var settings = {
     'z': 0.0
   }
 }
+var panel = new dat.GUI();
 
 var params = {
   loadFile: function(){
     document.getElementById("myInput").click();
-    loadSTLModel('./models/makefairbot.stl', 'ascii');
+    var stlMesh = loadSTLModel('./models/maker_bot.stl', 'ascii');
 
-    // if( !modelLoaded ){
-      modelUI.add( settings.model, 'x', 0, 360, 1).listen();//.onFinishCahnge(()=>{}); //then update model scale
-      modelUI.add( settings.model, 'y', 0, 360, 1).listen();
-      modelUI.add( settings.model, 'z', 0, 360, 1).listen();
-    //   modelLoaded = true;
-    // }
+      // modelUI.add( settings.model, 'x', 0, 360, 1).listen();//.onFinishCahnge(()=>{}); //then update model scale
+      // modelUI.add( settings.model, 'y', 0, 360, 1).listen();
+      // modelUI.add( settings.model, 'z', 0, 360, 1).listen();
+
+      if( stlMesh ){
+        scene.add( stlMesh );
+        objects.push( stlMesh ); //objects from editor
+
+        panel.add(settings, 'modelScale', -10, 10, 0.1).onChange(function(){
+          console.log("stl Mesh: ", stlMesh)
+          stlMesh.scale.set(settings.modelScale, settings.modelScale, settings.modelScale);
+        });
+      }
   },
+
   Kinemake:function() {
     console.log("clicked")
   },
+
   export: function(){
     console.log("export stl")
   }
 }
-
-var panel = new dat.GUI();
-
-var modelUI = panel.addFolder( 'Model Rotation' );
+// var modelUI = panel.addFolder( 'Model Scale' );
 
 
 function createPanel(){
@@ -57,7 +65,7 @@ function createPanel(){
   panel.add(params, 'Kinemake');
   panel.add(params, 'export').name('Export to STL');
 
-  modelUI.open();
+  // modelUI.open();
 }
 
 function addLRScalePanel(gearType){

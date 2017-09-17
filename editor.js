@@ -27,7 +27,7 @@ animate();
 function init() {
 
   // get type of gear and create UI according to it
-  createPanel();
+  createPanel(); //load basic UI
 
   container = document.createElement( 'div' );
   document.body.appendChild( container );
@@ -141,7 +141,7 @@ function loadGearBox(gearType) {
       gearsElement.right.rotation.x = gears[gearIdx-1].right.rotation.x;
     }
     addLRScalePanel();
-    
+
   }
   else if((gearType > 2 ) || (gearType < 9)){
 
