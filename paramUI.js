@@ -31,7 +31,7 @@ var panel = new dat.GUI();
 var params = {
   loadFile: function(){
     document.getElementById("myInput").click();
-    var stlMesh = loadSTLModel('./models/maker_bot.stl', 'ascii');
+    var stlMesh = loadSTLModel('./models/android.stl', 'ascii');
 
       // modelUI.add( settings.model, 'x', 0, 360, 1).listen();//.onFinishCahnge(()=>{}); //then update model scale
       // modelUI.add( settings.model, 'y', 0, 360, 1).listen();
@@ -50,6 +50,9 @@ var params = {
 
   Kinemake:function() {
     console.log("clicked")
+
+    loadSTLModel('./models/android-body.stl', 'chunk');
+
   },
 
   export: function(){
@@ -74,13 +77,13 @@ function addLRScalePanel(gearType){
     leftBoxUI = panel.addFolder( 'Scale Left BoudingBox' );
     rightBoxUI = panel.addFolder( 'Scale Right BoudingBox' );
 
-    leftBoxUI.add( settings.topBbox, 'x', 0, 5).name('Width').listen(); //then update model scale
-    leftBoxUI.add( settings.topBbox, 'y', 0, 5).name('Height').listen();
-    leftBoxUI.add( settings.topBbox, 'z', 0, 5).name('Length').listen();
+    leftBoxUI.add( settings.leftBbox, 'x', 0, 5).name('Width').listen(); //then update model scale
+    leftBoxUI.add( settings.leftBbox, 'y', 0, 5).name('Height').listen();
+    leftBoxUI.add( settings.leftBbox, 'z', 0, 5).name('Length').listen();
 
-    rightBoxUI.add( settings.topBbox, 'x', 0, 5).name('Width').listen(); //then update model scale
-    rightBoxUI.add( settings.topBbox, 'y', 0, 5).name('Height').listen();
-    rightBoxUI.add( settings.topBbox, 'z', 0, 5).name('Length').listen();
+    rightBoxUI.add( settings.rightBbox, 'x', 0, 5).name('Width').listen(); //then update model scale
+    rightBoxUI.add( settings.rightBbox, 'y', 0, 5).name('Height').listen();
+    rightBoxUI.add( settings.rightBbox, 'z', 0, 5).name('Length').listen();
 
     leftBoxUI.open();
     rightBoxUI.open();

@@ -16,6 +16,8 @@ var collisionOccured = false, collidableMeshList = [];
 var directionList = [];
 
 
+var body, arm1, arm2, head;
+
 var gears = [], gearsElement, gearIdx = 0;
 //to animate gear mechanisms
 var swingDelta = 0.01, camDelta = 0.01,
@@ -23,6 +25,8 @@ var swingDelta = 0.01, camDelta = 0.01,
 
 init();
 animate();
+
+var loader = new THREE.STLLoader();
 
 function init() {
 
@@ -91,10 +95,6 @@ function init() {
   //geometry operation
   var materialNormal = new THREE.MeshNormalMaterial();
 
-  //***** prepare for intersection
-  // var geomGear = THREE.CSG.toCSG(gears[gearIdx].box);
-  // var geomModel = THREE.CSG.toCSG(stlModel);
-
 
   var dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
   dragControls.addEventListener( 'dragstart', function ( event ) { controls.enabled = false; } );
@@ -124,7 +124,6 @@ function returnGearSelected(event){
 function loadGearBox(gearType) {
   // add gears
   console.log("curr gearType: ", gearType);
-  var loader = new THREE.STLLoader();
   var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
 
   if(gearType < 3 ){ // 1 or 2
@@ -270,6 +269,43 @@ function loadGearBox(gearType) {
 
 }
 
+// tentative function to load animation
+function loadAndroid(){
+  var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
+
+  loader.load('./assets/android-body.stl', (geometry) => {
+    body = new THREE.Mesh(geometry, material);
+    body.rotation.set( - Math.PI / 2, 0, 0 );
+    body.scale.set(6.8, 6.8, 6.8);
+    body.position.set(0,-65,0);
+    scene.add(body)
+  });
+
+  loader.load('./assets/arm.stl', (geometry) => {
+    arm1 = new THREE.Mesh(geometry, material);
+    arm2 = new THREE.Mesh(geometry, material);
+
+    arm1.rotation.set( - Math.PI / 2, 0, 0 );
+    arm1.scale.set(6.8, 6.8, 6.8);
+    arm1.position.set(-40,0,0);
+
+    arm2.rotation.set( - Math.PI / 2, 0, 0 );
+    arm2.scale.set(6.8, 6.8, 6.8);
+    arm2.position.set(40,0,0);
+    scene.add(arm1)
+    scene.add(arm2)
+  });
+
+  loader.load('./assets/head.stl', (geometry) => {
+    head = new THREE.Mesh(geometry, material);
+
+    head.rotation.set( - Math.PI / 2, 0, 0 );
+    head.scale.set(6.8, 6.8, 6.8);
+    head.position.set(0,35,0);
+    scene.add(head)
+  });
+}
+
 function animate() {
   requestAnimationFrame( animate );
 
@@ -308,6 +344,15 @@ function animate() {
         gear.left.rotation.x += rotationDirection;
         gear.leftGear.rotation.x += rotationDirection;
         gear.right.rotation.x += rotationDirection;
+
+        if(body){
+          console.log("body is loaded")
+
+          head.rotation.z += rotationDirection;
+          arm1.rotation.x += rotationDirection;
+          arm2.rotation.x += rotationDirection;
+        }
+
       break;
 
       case 4: //crank
@@ -399,6 +444,23 @@ function render() {
 
 
 function update() {
+
+
+  ///////************ this is for CSG operations
+  if(meshToReturn != undefined){
+  //   console.log("meshToReturn loaded: ", meshToReturn)
+  //
+  //   var cube = CSG.cube();
+  //   var geometryThree  = THREE.CSG.fromCSG(cube);
+  //   scene.add(geometryThree);
+  //
+  //   // var geomModel = THREE.CSG.toCSG(meshToReturn);
+  //   // console.log("geom Model: ", geomModel);
+  //
+
+  // console.log(gears[0].topGear);
+  }
+
 
   if(gears[1] != undefined){ //at least two boxes for collision detection
     var originObj = gears[0].box;

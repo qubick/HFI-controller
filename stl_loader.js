@@ -11,14 +11,18 @@ function loadSTLModel(filename, filetype) {
       var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
       // this.mesh = new THREE.Mesh( geometry, material );
 
-      meshToReturn = new THREE.Mesh(geometry, material);
-      meshToReturn.rotation.set( - Math.PI / 2, 0, 0 );
+      mesh = new THREE.Mesh(geometry, material);
+      mesh.rotation.set( - Math.PI / 2, 0, 0 );
       //
       // this.mesh.castShadow = true;
       // this.mesh.receiveShadow = true;
+      meshToReturn = mesh;
     } );
   }
 
+  if(filetype === 'chunk'){
+    loadAndroid();
+  }
 
   // Binary files
   if(filetype === 'binary'){
@@ -44,9 +48,9 @@ function loadSTLModel(filename, filetype) {
 
       mesh = new THREE.Mesh( geometry, material );
 
-      mesh.position.set( 0.136, - 0.37, - 0.6 );
-      mesh.rotation.set( - Math.PI / 2, 0.3, 0 );
-      mesh.scale.set( 2, 2, 2 );
+      // mesh.position.set( 0.136, - 0.37, - 0.6 );
+      // mesh.rotation.set( - Math.PI / 2, 0.3, 0 );
+      // mesh.scale.set( 2, 2, 2 );
 
       mesh.castShadow = true;
       mesh.receiveShadow = true;
