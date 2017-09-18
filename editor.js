@@ -346,7 +346,6 @@ function animate() {
         gear.right.rotation.x += rotationDirection;
 
         if(body){
-          console.log("body is loaded")
 
           head.rotation.z += rotationDirection;
           arm1.rotation.x += rotationDirection;
@@ -357,7 +356,7 @@ function animate() {
 
       case 4: //crank
         var topPos = gear.top.position.y;
-        if((topPos > gear.box.position.y + 75) || (topPos < gear.box.position.y + 50)) //original pos+=50, w/2=25
+        if((topPos > gear.box.position.y + 75) || (topPos < gear.box.position.y + 60)) //original pos+=50, w/2=25
           crankDelta *= -1;
 
         var rotationDirection = 0.01;
@@ -369,11 +368,17 @@ function animate() {
         gear.left.rotation.x += rotationDirection;
         gear.right.rotation.x += rotationDirection;
         gear.cam.rotation.x += rotationDirection;
+
+        if(body){
+          head.position.y += crankDelta;
+          arm1.rotation.x += rotationDirection;
+          arm2.rotation.x += rotationDirection;
+        }
       break;
 
       case 5: //dcam
         var rotAngle = gear.top.rotation.y;
-        if((rotAngle < 0) || (rotAngle > Math.PI)){
+        if((rotAngle < -Math.PI/2) || (rotAngle > Math.PI/2)){
           camDelta *= -1;
         }
 
@@ -386,6 +391,12 @@ function animate() {
         gear.right.rotation.x += rotationDirection;
         gear.cam1.rotation.x += rotationDirection;
         gear.cam2.rotation.x += rotationDirection;
+
+        if(body){
+          head.rotation.z += camDelta;
+          arm1.rotation.x += rotationDirection;
+          arm2.rotation.x += rotationDirection;
+        }
       break;
 
       case 6: //friction gear
@@ -399,6 +410,12 @@ function animate() {
         gear.leftGear.rotation.x += rotationDirection;
         gear.right.rotation.x -= rotationDirection;
         gear.rightGear.rotation.x -= rotationDirection;
+
+        if(body){
+          head.rotation.z += rotationDirection;
+          arm1.rotation.x += rotationDirection;
+          arm2.rotation.x -= rotationDirection;
+        }
       break;
 
       case 7: //pulley
