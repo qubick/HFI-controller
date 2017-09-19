@@ -5,25 +5,25 @@ var leftBoxUI, rightBoxUI, topBoxUI;
 
 var settings = {
   model: {
-    'x': 0.0,
-    'y': 0.0,
-    'z': 0.0
+    'x': 1.0,
+    'y': 1.0,
+    'z': 1.0
   },
-  modelScale: 0.0,
+  modelScale: 1.0,
   leftBbox: {
-    'x': 0.0,
-    'y': 0.0,
-    'z': 0.0
+    'x': 1.0,
+    'y': 1.0,
+    'z': 1.0
   },
   rightBbox: {
-    'x': 0.0,
-    'y': 0.0,
-    'z': 0.0
+    'x': 1.0,
+    'y': 1.0,
+    'z': 1.0
   },
   topBbox: {
-    'x': 0.0,
-    'y': 0.0,
-    'z': 0.0
+    'x': 1.0,
+    'y': 1.0,
+    'z': 1.0
   }
 }
 var panel = new dat.GUI();
@@ -49,7 +49,6 @@ var params = {
   },
 
   Kinemake:function() {
-    console.log("clicked")
 
     loadSTLModel('./models/android-body.stl', 'chunk');
 
@@ -97,9 +96,19 @@ function addTopScalePanel(gearType){
   if( !topScaleUIAdded ){
     topBoxUI = panel.addFolder( 'Scale Top BoundingBox' );
 
-    topBoxUI.add( settings.topBbox, 'x', 0, 5).name('Width').listen(); //then update model scale
-    topBoxUI.add( settings.topBbox, 'y', 0, 5).name('Height').listen();
-    topBoxUI.add( settings.topBbox, 'z', 0, 5).name('Length').listen();
+    topBoxUI.add( settings.topBbox, 'x', 0, 5).name('Width').onChange(()=>{
+      console.log("gears.top: ", gears[0].top);
+      console.log("x scale: ", settings.topBbox.x);
+      gears[0].top.scale.set(settings.topBbox.x, settings.topBbox.y, settings.topBbox.z);
+    }); //then update model scale
+    topBoxUI.add( settings.topBbox, 'y', 0, 5).name('Height').onChange(()=>{
+      console.log("y scale: ", settings.topBbox.y);
+      gears[0].top.scale.set(settings.topBbox.x, settings.topBbox.y, settings.topBbox.z);
+    });
+    topBoxUI.add( settings.topBbox, 'z', 0, 5).name('Length').onChange(()=>{
+      console.log("z scale: ", settings.topBbox.z);
+      gears[0].top.scale.set(settings.topBbox.x, settings.topBbox.y, settings.topBbox.z);
+    });
 
     topBoxUI.open();
 
