@@ -49,7 +49,8 @@ var params = {
   },
 
   Kinemake:function() {
-
+    //tentative
+    panel.add(settings, 'modelScale', -10, 10, 0.1);
     loadSTLModel('./models/android-body.stl', 'chunk');
 
   },

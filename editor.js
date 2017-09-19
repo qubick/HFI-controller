@@ -260,7 +260,7 @@ function loadGearBox(gearType) {
   } //end of switch
 
   gearsElement.gearType = gearType;
-  gearsElement.box.position.x += 160 * gearIdx;
+  gearsElement.box.position.x += 175 * gearIdx;
   gears[gearIdx] = gearsElement;
   gearIdx++;
 
@@ -276,8 +276,8 @@ function loadAndroid(){
   loader.load('./assets/android-body.stl', (geometry) => {
     body = new THREE.Mesh(geometry, material);
     body.rotation.set( - Math.PI / 2, 0, 0 );
-    body.scale.set(6.8, 6.8, 6.8);
-    body.position.set(0,-65,0);
+    body.scale.set(7.5, 7.5, 7.5);
+    body.position.set(0,-70,0);
     scene.add(body)
   });
 
@@ -286,12 +286,12 @@ function loadAndroid(){
     arm2 = new THREE.Mesh(geometry, material);
 
     arm1.rotation.set( - Math.PI / 2, 0, 0 );
-    arm1.scale.set(6.8, 6.8, 6.8);
-    arm1.position.set(-40,0,0);
+    arm1.scale.set(7.5, 7.5, 7.5);
+    arm1.position.set(-45,0,0);
 
     arm2.rotation.set( - Math.PI / 2, 0, 0 );
-    arm2.scale.set(6.8, 6.8, 6.8);
-    arm2.position.set(40,0,0);
+    arm2.scale.set(7.5, 7.5, 7.5);
+    arm2.position.set(45,0,0);
     scene.add(arm1)
     scene.add(arm2)
   });
@@ -300,8 +300,8 @@ function loadAndroid(){
     head = new THREE.Mesh(geometry, material);
 
     head.rotation.set( - Math.PI / 2, 0, 0 );
-    head.scale.set(6.8, 6.8, 6.8);
-    head.position.set(0,35,0);
+    head.scale.set(7.5, 7.5, 7.5);
+    head.position.set(0,40,0);
     scene.add(head)
   });
 }
@@ -420,8 +420,16 @@ function animate() {
 
       case 7: //pulley
         var leverPos = gear.top.position.x + (160 * i); //base position
+        console.log("leverPos: ", leverPos)
         if((leverPos < gear.box.position.x - 10) || (leverPos > gear.box.position.x + 10)) //original pos+=50, w/2=25
           pulleyDelta *= -1;
+
+        gear.top.position.x += pulleyDelta;
+        gear.tshaft.position.x += pulleyDelta;
+        gear.left.position.x += pulleyDelta;
+        gear.lshaft.position.x += pulleyDelta;
+        gear.right.position.x += pulleyDelta;
+        gear.rshaft.position.x += pulleyDelta;
       break;
 
       case 8: //slider
@@ -506,9 +514,9 @@ function update() {
   		var collisionResults = ray.intersectObjects( emptyMeshList ); //this should exclude self
   		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ){
         powerList.forEach((power) => {
-            if((power != originObj.powerType) && changed) {//&& (collisionOccured === false)){
-  			     window.alert("Gearboxes are not compatible in power direction");
-             changed = false;
+            if(power != originObj.powerType){ //&& changed) {//&& (collisionOccured === false)){
+  			     alert("Gearboxes' power source are not compatible");
+            //  changed = false;
            }
         })
       }
