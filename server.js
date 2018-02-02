@@ -10,12 +10,9 @@ app.get("/", (req, res) => {
 	res.sendfile('index.html')
 });
 
-app.get("/test", (req, res) => {
-	res.sendfile('test.html')
-});
 
-app.listen(5000, () => {
-	console.log("example app listening on port 5000")
+app.listen(5555, () => {
+	console.log("example app listening on port 5555")
 });
 
 app.post("/user/add", function(req, res){
