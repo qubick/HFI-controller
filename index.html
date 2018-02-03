@@ -31,7 +31,7 @@
 					}
 					#gallery {
 						position:fixed;
-						width:150px;
+						width:340px;
 						height: 100%;
 						top:0;
 						left:0;
@@ -39,16 +39,7 @@
 						/*overflow: auto;*/
     				overflow-y: scroll !important;
 					}
-					#bbox_shape {
-						position: fixed;
-						top: 0;
-						right: 0;
-						width: 300px;
-						height: 100px;
-						background-color: grey;
-						display: none;
-					}
-					#loadSTL {
+					/* #loadSTL {
 						position: fixed;
 						top: 105px;
 						right: 0;
@@ -56,23 +47,22 @@
 						height: 60px;
 						background-color: grey;
 						display: none;
-					}
-					#model_rotation {
-						position: fixed;
-						top: 170px;
-						right: 0;
-						width: 300px;
-						height: 100px;
-						background-color: grey;
-						display: none;
-					}
+					} */
 				</style>
 
 		<body>
 			
 			<!-- setting camera -->
-			<div id="cam"></div>	
-			<div id="results"></div>
+			<div id="gallery">
+				<div id="cam"></div>
+				<!-- A button for taking snaps -->
+				<form>
+					<input type=button value="Take Snapshot" onClick="take_snapshot()">
+				</form>
+		
+				<div id="results"></div>
+			</div>
+			
 			<script type="text/javascript" src="./js/webcam.min.js"></script>
 			
 			<!-- Configure a few settings and attach camera -->
@@ -86,11 +76,7 @@
 				Webcam.attach( '#cam' );
 			</script>
 			
-			<!-- A button for taking snaps -->
-			<form>
-				<input type=button value="Take Snapshot" onClick="take_snapshot()">
-			</form>
-	
+			
 			<!-- Code to handle taking the snapshot and displaying it locally -->
 			<script language="JavaScript">
 				function take_snapshot() {
@@ -101,7 +87,7 @@
 						
 						// display results in page
 						document.getElementById('results').innerHTML = 
-							'<h2>Here is your image:</h2>' + 
+							'Captured image:' + 
 							'<img src="'+data_uri+'"/>';
 					} );
 				}
