@@ -1,7 +1,7 @@
 var container, stats;
 var camera, controls, scene, renderer;
-var objects = [];
 var originObj, originPoint;
+var objects;
 
 init();
 animate();

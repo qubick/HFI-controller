@@ -22,3 +22,5 @@ app.get(/^(.+)$/, function(req, res){
 	console.log('static file requre: ' + req.params);
 	res.sendFile(__dirname + req.params[0]);
 });
+
+// console.log("objects", objects.length)
