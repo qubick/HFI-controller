@@ -66,33 +66,13 @@
 						background-color: grey;
 						display: none;
 					}
-					
-					.box__dragndrop,
-					.box__uploading,
-					.box__success,
-					.box__error {
-					  display: none;
-					}
-					.draggable {
-						width:150px;
-					}
-
-					.btn {
-				    background-color: #555555; /* Green */
-				    border: none;
-				    color: white;
-				    padding: 5px 10px;
-				    text-align: center;
-				    text-decoration: none;
-				    display: inline-block;
-				    font-size: 14px;
-					}
 				</style>
 
 		<body>
 			
 			<!-- setting camera -->
-			<div id="my_camera"></div>	
+			<div id="cam"></div>	
+			<div id="results"></div>
 			<script type="text/javascript" src="./js/webcam.min.js"></script>
 			
 			<!-- Configure a few settings and attach camera -->
@@ -103,7 +83,7 @@
 					image_format: 'jpeg',
 					jpeg_quality: 90
 				});
-				Webcam.attach( '#my_camera' );
+				Webcam.attach( '#cam' );
 			</script>
 			
 			<!-- A button for taking snaps -->
@@ -114,8 +94,11 @@
 			<!-- Code to handle taking the snapshot and displaying it locally -->
 			<script language="JavaScript">
 				function take_snapshot() {
+					
 					// take snapshot and get image data
-					Webcam.snap( function(data_uri) {
+					Webcam.snap( (data_uri)=> {
+						// console.log(data_uri)
+						
 						// display results in page
 						document.getElementById('results').innerHTML = 
 							'<h2>Here is your image:</h2>' + 
