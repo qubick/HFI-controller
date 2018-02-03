@@ -2,9 +2,12 @@
 <html lang="en">
 		<head>
 				<meta charset="utf-8">
-				<title>Kinemaker</title>
+				<title>HFI Controller</title>
 
-
+				<!-- <script data-main="scripts/main" src="scripts/require.js"></script> -->
+				
+				<script src="bundle.js"></script>
+				
 				<!-- p5.js for UI elements -->
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/p5.min.js"></script>
 		    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/addons/p5.dom.min.js"></script>
@@ -63,15 +66,7 @@
 						background-color: grey;
 						display: none;
 					}
-					#drop_zone {
-						border: 0px solid blue;
-						background-color: gray;
-						position:fixed;
-						width:400px;
-						height:200px;
-						top:0;
-						left:50px;
-					}
+					
 					.box__dragndrop,
 					.box__uploading,
 					.box__success,
@@ -95,6 +90,40 @@
 				</style>
 
 		<body>
+			
+			<!-- setting camera -->
+			<div id="my_camera"></div>	
+			<script type="text/javascript" src="./js/webcam.min.js"></script>
+			
+			<!-- Configure a few settings and attach camera -->
+			<script language="JavaScript">
+				Webcam.set({
+					width: 320,
+					height: 240,
+					image_format: 'jpeg',
+					jpeg_quality: 90
+				});
+				Webcam.attach( '#my_camera' );
+			</script>
+			
+			<!-- A button for taking snaps -->
+			<form>
+				<input type=button value="Take Snapshot" onClick="take_snapshot()">
+			</form>
+	
+			<!-- Code to handle taking the snapshot and displaying it locally -->
+			<script language="JavaScript">
+				function take_snapshot() {
+					// take snapshot and get image data
+					Webcam.snap( function(data_uri) {
+						// display results in page
+						document.getElementById('results').innerHTML = 
+							'<h2>Here is your image:</h2>' + 
+							'<img src="'+data_uri+'"/>';
+					} );
+				}
+			</script>
+	
 			<div id="container" left="150px" top="0px" class="droppable">
 				<script src="./build/three.js"></script>
 				<script src="./build/csg.js"></script>
@@ -113,19 +142,15 @@
 
 				<script src="./js/controls/DragControls.js"></script>
 				<script src="./js/controls/TrackballControls.js"></script>
-
-
+				
 				<script src="eventHandler.js"></script>
-				<script src="./gears/gear_units.js"></script>
 				<script src="./stl_loader.js"></script>
+				
+				
+				<!-- <script src="./main.js"></script> -->
 				<script src="./paramUI.js"></script>
 				<script src="./editor.js"></script>
 
-				<!-- #gearbox gallery -->
-				<div id="gallery" onclick="returnGearSelected(event)">
-					<!-- <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-	  			<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> -->
-			</div>
 
 			<input id="myInput" type="file" style="visibility:hidden" />
 		</body>
