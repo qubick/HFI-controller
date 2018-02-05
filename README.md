@@ -4,7 +4,8 @@
 
 `` browserify main.js
 `` connect serialPort
-`` capture cam twice (with interval) and save --> compare diff
+`` capture cam twice (with interval) and save (done)
+`` load cpatured images using cv.imshow --> compare diff (subtract background)
 
 `Reference
 ``OpenCV js examples

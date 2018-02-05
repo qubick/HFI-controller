@@ -48,11 +48,15 @@
 				<div id="cam"></div>
 				<form>
 					<input type=button value="Pause print" onClick="take_snapshot()" id="snapshotBtn">
+					<input type=button value="ImgProcessing" onClick="doImageProcessing()" id="snapshotBtn">
 				</form>
 		
-				<div id="results1"></div>
-				<div id="results2">
-					<canvas id="canvasOutput" ></canvas>
+				<div id="imgs">
+					<div id="results1"></div>
+					<div id="results2" ></div>
+					<!-- <div id="results3"> -->
+						<canvas id="subtResult"></canvas>
+					<!-- </div> -->
 				</div>
 			</div>
 			
