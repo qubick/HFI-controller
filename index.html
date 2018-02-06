@@ -39,7 +39,6 @@
 				</style>
 
 		<body>
-			
 			<!-- setting camera -->
 			<div id="gallery">
 				<div id="cam"></div>
@@ -57,12 +56,14 @@
 				</div>
 			</div>
 			
+			<!-- dat GUI hidden button -->
+			<input id="myInput" type="file" onchange='openFile(event)' style="visibility:hidden" />
+			
 			<script src="bundle.js"></script>
+			
+			<!-- for image processing -->
 			<script type="text/javascript" src="./js/webcam.min.js"></script>
 			<script language="JavaScript" src="cam.js"></script>
-	
-	
-			<!-- for image processing -->
 			<script src="./opencvjs/opencv/build_js/bin/opencv.js" type="text/javascript"></script>
 	
 			<div id="container" left="150px" top="0px" class="droppable">
@@ -91,7 +92,7 @@
 				<!-- <script src="./main.js"></script> -->
 				<script src="./paramUI.js"></script>
 				<script src="./editor.js"></script>
-
+				<script src="readGcode.js"></script>
 
 			<input id="myInput" type="file" style="visibility:hidden" />
 		</body>

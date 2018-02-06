@@ -11,10 +11,12 @@ var panel = new dat.GUI();
 var params = {
   loadFile: function(){
     
+    document.getElementById('myInput').click(); //bind file opener
+    
     var material = new THREE.LineBasicMaterial({ color: 0x0000ff});
     var geometry = new THREE.Geometry();
     
-    // readGcodeFile("cube.gcode");
+    // readGcodeFile("assets/cube.gcode");
     
     // gcodeObject.forEach(vertex){
     //   geometry.vertices.push(new THREE.Vector3(vertex.x, vertex.y, vertex.z))
