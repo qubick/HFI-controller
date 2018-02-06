@@ -21,8 +21,9 @@ app.listen(5555, () => {
 	});
 	
 	if(port){
-		console.log("serial port opened to the printer")
-		port.write('G0 X10 F1800')
+		console.log("serial port opened to the printer");
+		port.write('M109 S250.000000');
+		port.write('G0 X10 F1800');
 	}
 	else {
 		console.log("failed to open port")

@@ -13,18 +13,7 @@ var params = {
     
     document.getElementById('myInput').click(); //bind file opener
     
-    var material = new THREE.LineBasicMaterial({ color: 0x0000ff});
-    var geometry = new THREE.Geometry();
     
-    // readGcodeFile("assets/cube.gcode");
-    
-    // gcodeObject.forEach(vertex){
-    //   geometry.vertices.push(new THREE.Vector3(vertex.x, vertex.y, vertex.z))
-    //   var line = new Three.Line(geometry, material);
-    // }
-    
-    // scene.add(line);
-    // renderer.render(scene.camera); //render here?
     
   },
 

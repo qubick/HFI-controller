@@ -8,6 +8,9 @@ animate();
 
 var loader = new THREE.STLLoader();
 
+var lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000});
+var slicingGeometry = new THREE.Geometry();
+
 function init() {
 
   createPanel(); //load basic UI
@@ -75,7 +78,7 @@ function init() {
   stats = new Stats();
   container.appendChild( stats.dom );
 
-}
+} //end of init
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -100,5 +103,11 @@ function render() {
 
 
 function update() {
+  
+}
 
+function drawLine() {
+  var line = new THREE.Line(slicingGeometry, lineMaterial);
+  scene.add(line);
+  render(camera);
 }
