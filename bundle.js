@@ -1,7 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var SerialPort = require('serialport');
-console.log("serialport created")
-},{"serialport":15}],2:[function(require,module,exports){
 (function (process,__filename){
 
 /**
@@ -176,7 +173,7 @@ exports.getRoot = function getRoot (file) {
 }
 
 }).call(this,require('_process'),"/node_modules/bindings/bindings.js")
-},{"_process":39,"fs":27,"path":37}],3:[function(require,module,exports){
+},{"_process":39,"fs":27,"path":37}],2:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -330,7 +327,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -394,7 +391,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":30}],5:[function(require,module,exports){
+},{"buffer":30}],4:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -415,13 +412,10 @@ switch (process.platform) {
 }
 
 }).call(this,require('_process'))
-},{"./darwin":7,"./linux":9,"./win32":14,"_process":39,"debug":25}],6:[function(require,module,exports){
+},{"./darwin":6,"./linux":8,"./win32":13,"_process":39,"debug":24}],5:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 const debug = require('debug')('serialport:bindings');
-/**
- * @module serialport
- */
 
 /**
  * @name module:serialport.Binding
@@ -437,7 +431,7 @@ const debug = require('debug')('serialport:bindings');
 
 /**
  * You never have to use `Binding` objects directly. SerialPort uses them to access the underlying hardware. This documentation is geared towards people who are making bindings for different platforms. This class can be inherited from to get type checking for each method.
- * @class
+ * @class BaseBinding
  * @param {object} options
  * @property {boolean} isOpen Required property. `true` if the port is open, `false` otherwise. Should be read-only.
  * @throws {TypeError} When given invalid arguments, a `TypeError` is thrown.
@@ -638,8 +632,8 @@ The in progress writes must error when the port is closed with an error object t
 
 module.exports = BaseBinding;
 
-}).call(this,{"isBuffer":require("../../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js")})
-},{"../../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js":35,"debug":25}],7:[function(require,module,exports){
+}).call(this,{"isBuffer":require("../../../../opencvjs/opencv/emsdk-portable/node/8.9.1_64bit/lib/node_modules/browserify/node_modules/is-buffer/index.js")})
+},{"../../../../opencvjs/opencv/emsdk-portable/node/8.9.1_64bit/lib/node_modules/browserify/node_modules/is-buffer/index.js":35,"debug":24}],6:[function(require,module,exports){
 'use strict';
 const binding = require('bindings')('serialport.node');
 const BaseBinding = require('./base');
@@ -736,7 +730,7 @@ class DarwinBinding extends BaseBinding {
 
 module.exports = DarwinBinding;
 
-},{"../util":24,"./base":6,"./poller":10,"./unix-read":11,"./unix-write":12,"bindings":2}],8:[function(require,module,exports){
+},{"../util":23,"./base":5,"./poller":9,"./unix-read":10,"./unix-write":11,"bindings":1}],7:[function(require,module,exports){
 'use strict';
 
 const childProcess = require('child_process');
@@ -833,7 +827,7 @@ function listLinux() {
 
 module.exports = listLinux;
 
-},{"../parsers/readline":20,"child_process":27}],9:[function(require,module,exports){
+},{"../parsers/readline":19,"child_process":27}],8:[function(require,module,exports){
 'use strict';
 const binding = require('bindings')('serialport.node');
 const BaseBinding = require('./base');
@@ -931,13 +925,17 @@ class LinuxBinding extends BaseBinding {
 
 module.exports = LinuxBinding;
 
-},{"../util":24,"./base":6,"./linux-list":8,"./poller":10,"./unix-read":11,"./unix-write":12,"bindings":2}],10:[function(require,module,exports){
+},{"../util":23,"./base":5,"./linux-list":7,"./poller":9,"./unix-read":10,"./unix-write":11,"bindings":1}],9:[function(require,module,exports){
 'use strict';
 const debug = require('debug');
 const logger = debug('serialport:poller');
 const EventEmitter = require('events');
 const FDPoller = require('bindings')('serialport.node').Poller;
 
+/**
+ * Enum of event values
+ * @enum {int}
+ */
 const EVENTS = {
   UV_READABLE: 1,
   UV_WRITABLE: 2,
@@ -969,13 +967,17 @@ function handleEvent(error, eventFlag) {
 /**
  * Polls unix systems for readable or writable states of a file or serialport
  */
-module.exports = class Poller extends EventEmitter {
+class Poller extends EventEmitter {
   constructor(fd) {
     logger('Creating poller');
     super();
     this.poller = new FDPoller(fd, handleEvent.bind(this));
   }
-
+  /**
+   * Wait for the next event to occur
+   * @param {string} Event ('readable'|'writable'|'disconnect')
+   * @param {function} callback
+   */
   once(event) {
     switch (event) {
       case 'readable':
@@ -991,6 +993,10 @@ module.exports = class Poller extends EventEmitter {
     return EventEmitter.prototype.once.apply(this, arguments);
   }
 
+  /**
+   * Ask the bindings to listen for an event
+   * @param {EVENTS} eventFlag
+   */
   poll(eventFlag) {
     eventFlag = eventFlag || 0;
 
@@ -1007,13 +1013,12 @@ module.exports = class Poller extends EventEmitter {
     this.poller.poll(eventFlag);
   }
 
+  /**
+   * Stop listening for events and cancel all outstanding listening with an error
+   */
   stop() {
     logger('Stopping poller');
     this.poller.stop();
-    this.emitCanceled();
-  }
-
-  emitCanceled() {
     const err = new Error('Canceled');
     err.canceled = true;
     this.emit('readable', err);
@@ -1022,7 +1027,11 @@ module.exports = class Poller extends EventEmitter {
   }
 };
 
-},{"bindings":2,"debug":25,"events":32}],11:[function(require,module,exports){
+Poller.EVENTS = EVENTS;
+
+module.exports = Poller;
+
+},{"bindings":1,"debug":24,"events":32}],10:[function(require,module,exports){
 'use strict';
 const fs = require('fs');
 const debug = require('debug');
@@ -1078,7 +1087,7 @@ module.exports = function unixRead(buffer, offset, length) {
   });
 };
 
-},{"debug":25,"fs":27}],12:[function(require,module,exports){
+},{"debug":24,"fs":27}],11:[function(require,module,exports){
 'use strict';
 const fs = require('fs');
 const debug = require('debug');
@@ -1141,7 +1150,7 @@ module.exports = function unixWrite(buffer, offset) {
   });
 };
 
-},{"debug":25,"fs":27}],13:[function(require,module,exports){
+},{"debug":24,"fs":27}],12:[function(require,module,exports){
 'use strict';
 
 const PARSERS = [
@@ -1163,7 +1172,7 @@ module.exports = function(pnpId) {
   return null;
 };
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 const binding = require('bindings')('serialport.node');
 const BaseBinding = require('./base');
@@ -1266,29 +1275,45 @@ class WindowsBinding extends BaseBinding {
 
 module.exports = WindowsBinding;
 
-},{"../util":24,"./base":6,"./win32-sn-parser":13,"bindings":2}],15:[function(require,module,exports){
+},{"../util":23,"./base":5,"./win32-sn-parser":12,"bindings":1}],14:[function(require,module,exports){
 'use strict';
-
-/**
- * @module serialport
- * @copyright Chris Williams <chris@iterativedesigns.com>
- */
-
 const SerialPort = require('./serialport');
 const Binding = require('./bindings/auto-detect');
 const parsers = require('./parsers');
 
+/**
+ * @type {BaseBinding}
+ */
 SerialPort.Binding = Binding;
+
+/**
+ * @type {Parsers}
+ */
 SerialPort.parsers = parsers;
 
 module.exports = SerialPort;
 
-},{"./bindings/auto-detect":5,"./parsers":19,"./serialport":23}],16:[function(require,module,exports){
+},{"./bindings/auto-detect":4,"./parsers":18,"./serialport":22}],15:[function(require,module,exports){
 'use strict';
 const Buffer = require('safe-buffer').Buffer;
 const Transform = require('stream').Transform;
 
-module.exports = class ByteLengthParser extends Transform {
+/**
+ * A transform stream that emits data as a buffer after a specific number of bytes are received.
+ * @extends Transform
+ * @param {Object} options
+ * @param {Number} options.length the number of bytes on each data event
+ * @example
+To use the `ByteLength` parser:
+```js
+const SerialPort = require('serialport');
+const ByteLength = SerialPort.parsers.ByteLength
+const port = new SerialPort('/dev/tty-usbserial1');
+const parser = port.pipe(new ByteLength({length: 8}));
+parser.on('data', console.log); // will have 8 bytes per data event
+```
+ */
+class ByteLengthParser extends Transform {
   constructor(options) {
     super(options);
     options = options || {};
@@ -1302,33 +1327,52 @@ module.exports = class ByteLengthParser extends Transform {
     }
 
     this.length = options.length;
-    this.buffer = Buffer.alloc(0);
+    this.position = 0;
+    this.buffer = Buffer.alloc(this.length);
   }
 
   _transform(chunk, encoding, cb) {
-    let data = Buffer.concat([this.buffer, chunk]);
-    while (data.length >= this.length) {
-      const out = data.slice(0, this.length);
-      this.push(out);
-      data = data.slice(this.length);
+    let cursor = 0;
+    while (cursor < chunk.length) {
+      this.buffer[this.position] = chunk[cursor];
+      cursor++;
+      this.position++;
+      if (this.position === this.length) {
+        this.push(this.buffer);
+        this.buffer = Buffer.alloc(this.length);
+        this.position = 0;
+      }
     }
-    this.buffer = data;
     cb();
   }
 
   _flush(cb) {
-    this.push(this.buffer);
-    this.buffer = Buffer.alloc(0);
+    this.push(this.buffer.slice(0, this.position));
+    this.buffer = Buffer.alloc(this.length);
     cb();
   }
 };
 
-},{"safe-buffer":4,"stream":54}],17:[function(require,module,exports){
+module.exports = ByteLengthParser;
+
+},{"safe-buffer":3,"stream":54}],16:[function(require,module,exports){
 'use strict';
 const Transform = require('stream').Transform;
 const Buffer = require('safe-buffer').Buffer;
-
-module.exports = class CCTalkParser extends Transform {
+/**
+ * Parses the CCTalk protocol
+ * @extends Transform
+ * @example
+CCTalk Messages are emitted as buffers.
+```js
+const SerialPort = require('serialport');
+const CCTalk = SerialPort.parsers.CCTalk;
+const port = new SerialPort('/dev/ttyUSB0');
+const parser = port.pipe(new CCtalk());
+parser.on('data', console.log);
+```
+ */
+class CCTalkParser extends Transform {
   constructor() {
     super();
     this.array = [];
@@ -1356,12 +1400,26 @@ module.exports = class CCTalkParser extends Transform {
   }
 };
 
-},{"safe-buffer":4,"stream":54}],18:[function(require,module,exports){
+module.exports = CCTalkParser;
+
+},{"safe-buffer":3,"stream":54}],17:[function(require,module,exports){
 'use strict';
 const Buffer = require('safe-buffer').Buffer;
 const Transform = require('stream').Transform;
-
-module.exports = class DelimiterParser extends Transform {
+/**
+ * A transform stream that emits data each time a byte sequence is received.
+ * @extends Transform
+ * @example
+To use the `Delimiter` parser, provide a delimiter as a string, buffer, or array of bytes:
+```js
+const SerialPort = require('serialport');
+const Delimiter = SerialPort.parsers.Delimiter;
+const port = new SerialPort('/dev/tty-usbserial1');
+const parser = port.pipe(new Delimiter({ delimiter: Buffer.from('EOL') }));
+parser.on('data', console.log);
+```
+ */
+class DelimiterParser extends Transform {
   constructor(options) {
     options = options || {};
     super(options);
@@ -1374,6 +1432,7 @@ module.exports = class DelimiterParser extends Transform {
       throw new TypeError('"delimiter" has a 0 or undefined length');
     }
 
+    this.includeDelimiter = options.includeDelimiter !== undefined ? options.includeDelimiter : false;
     this.delimiter = Buffer.from(options.delimiter);
     this.buffer = Buffer.alloc(0);
   }
@@ -1382,7 +1441,7 @@ module.exports = class DelimiterParser extends Transform {
     let data = Buffer.concat([this.buffer, chunk]);
     let position;
     while ((position = data.indexOf(this.delimiter)) !== -1) {
-      this.push(data.slice(0, position));
+      this.push(data.slice(0, position + (this.includeDelimiter ? this.delimiter.length : 0)));
       data = data.slice(position + this.delimiter.length);
     }
     this.buffer = data;
@@ -1396,20 +1455,21 @@ module.exports = class DelimiterParser extends Transform {
   }
 };
 
-},{"safe-buffer":4,"stream":54}],19:[function(require,module,exports){
-'use strict';
+module.exports = DelimiterParser;
 
+},{"safe-buffer":3,"stream":54}],18:[function(require,module,exports){
+'use strict';
 /**
  * The default `Parsers` are [Transform streams](https://nodejs.org/api/stream.html#stream_class_stream_transform) that parse data in different ways to transform incoming data.
 
  To use the parsers, you must create them and then pipe the Serialport to the parser. Be careful to only write to the SerialPort object and not the parser.
- * @name module:serialport.parsers
- * @type {object}
- * @property {Class} [ByteLength] is a transform stream that emits data as a buffer after a specific number of bytes are received.
- * @property {Class} [Delimiter] is a transform stream that emits data each time a byte sequence is received.
- * @property {Class} [Readline] is a transform stream that emits data after a newline delimiter is received.
- * @property {Class} [Ready] is a transform stream that waits for a sequence of "ready" bytes before emitting a ready event and emitting data events
- * @property {Class} [Regex] is a transform stream that uses a regular expression to split the incoming text upon.
+ * @typedef {Object} Parsers
+ * @property {Transform} ByteLength
+ * @property {Transform} CCtalk
+ * @property {Transform} Delimiter
+ * @property {Transform} Readline
+ * @property {Transform} Ready
+ * @property {Transform} Regex
 
  * @since 5.0.0
  * @example
@@ -1425,61 +1485,6 @@ port.write('ROBOT PLEASE RESPOND\n');
 // Creating the parser and piping can be shortened to
 // const parser = port.pipe(new Readline());
 ```
-
-To use the `ByteLength` parser, provide the length of the number of bytes:
-```js
-const SerialPort = require('serialport');
-const ByteLength = SerialPort.parsers.ByteLength
-const port = new SerialPort('/dev/tty-usbserial1');
-const parser = port.pipe(new ByteLength({length: 8}));
-parser.on('data', console.log);
-```
-
-To use the `Delimiter` parser, provide a delimiter as a string, buffer, or array of bytes:
-```js
-const SerialPort = require('serialport');
-const Delimiter = SerialPort.parsers.Delimiter;
-const port = new SerialPort('/dev/tty-usbserial1');
-const parser = port.pipe(new Delimiter({ delimiter: Buffer.from('EOL') }));
-parser.on('data', console.log);
-```
-
-To use the `Readline` parser, provide a delimiter (defaults to '\n'). Data is emitted as string controllable by the `encoding` option (defaults to `utf8`).
-```js
-const SerialPort = require('serialport');
-const Readline = SerialPort.parsers.Readline;
-const port = new SerialPort('/dev/tty-usbserial1');
-const parser = port.pipe(new Readline({ delimiter: '\r\n' }));
-parser.on('data', console.log);
-```
-
-To use the `Ready` parser provide a byte start sequence. After the bytes have been received a ready event is fired and data events are passed through.
-```js
-const SerialPort = require('serialport');
-const Ready = SerialPort.parsers.Ready;
-const port = new SerialPort('/dev/tty-usbserial1');
-const parser = port.pipe(new Ready({ data: 'READY' }));
-parser.on('ready', () => console.log('the ready byte sequence has been received'))
-parser.on('data', console.log); // all data after READY is received
-```
-
-To use the `Regex` parser provide a regular expression to split the incoming text upon. Data is emitted as string controllable by the `encoding` option (defaults to `utf8`).
-```js
-const SerialPort = require('serialport');
-const Regex = SerialPort.parsers.Regex;
-const port = new SerialPort('/dev/tty-usbserial1');
-const parser = port.pipe(new Regex({ regex: /[\r\n]+/ }));
-parser.on('data', console.log);
-```
-
-To use the `CCTalk` parser you need to provide nothing. CCTalk Messages get emitted as buffer.
-```js
-const SerialPort = require('serialport');
-const CCTalk = SerialPort.parsers.CCTalk;
-const port = new SerialPort('/dev/ttyUSB0');
-const parser = port.pipe(new CCtalk());
-parser.on('data', console.log);
-```
  */
 
 module.exports = {
@@ -1491,12 +1496,24 @@ module.exports = {
   Regex: require('./regex')
 };
 
-},{"./byte-length":16,"./cctalk":17,"./delimiter":18,"./readline":20,"./ready":21,"./regex":22}],20:[function(require,module,exports){
+},{"./byte-length":15,"./cctalk":16,"./delimiter":17,"./readline":19,"./ready":20,"./regex":21}],19:[function(require,module,exports){
 'use strict';
 const Buffer = require('safe-buffer').Buffer;
 const DelimiterParser = require('./delimiter');
-
-module.exports = class ReadLineParser extends DelimiterParser {
+/**
+ *  A transform stream that emits data after a newline delimiter is received.
+ * @extends DelimiterParser
+ * @example
+To use the `Readline` parser, provide a delimiter (defaults to '\n'). Data is emitted as string controllable by the `encoding` option (defaults to `utf8`).
+```js
+const SerialPort = require('serialport');
+const Readline = SerialPort.parsers.Readline;
+const port = new SerialPort('/dev/tty-usbserial1');
+const parser = port.pipe(new Readline({ delimiter: '\r\n' }));
+parser.on('data', console.log);
+```
+*/
+class ReadLineParser extends DelimiterParser {
   constructor(options) {
     const opts = Object.assign({
       delimiter: Buffer.from('\n', 'utf8'),
@@ -1511,12 +1528,32 @@ module.exports = class ReadLineParser extends DelimiterParser {
   }
 };
 
-},{"./delimiter":18,"safe-buffer":4}],21:[function(require,module,exports){
+module.exports = ReadLineParser;
+
+},{"./delimiter":17,"safe-buffer":3}],20:[function(require,module,exports){
 'use strict';
 const Buffer = require('safe-buffer').Buffer;
 const Transform = require('stream').Transform;
-
-module.exports = class ReadyParser extends Transform {
+/**
+ * A transform stream that waits for a sequence of "ready" bytes before emitting a ready event and emitting data events
+ * @extends Transform
+ * @example
+To use the `Ready` parser provide a byte start sequence. After the bytes have been received a ready event is fired and data events are passed through.
+```js
+const SerialPort = require('serialport');
+const Ready = SerialPort.parsers.Ready;
+const port = new SerialPort('/dev/tty-usbserial1');
+const parser = port.pipe(new Ready({ delimiter: 'READY' }));
+parser.on('ready', () => console.log('the ready byte sequence has been received'))
+parser.on('data', console.log); // all data after READY is received
+```
+ */
+class ReadyParser extends Transform {
+  /**
+   *
+   * @param {object} options
+   * @param {string|Buffer|array} options.delimiter
+   */
   constructor(options) {
     options = options || {};
     if (options.delimiter === undefined) {
@@ -1560,11 +1597,26 @@ module.exports = class ReadyParser extends Transform {
   }
 };
 
-},{"safe-buffer":4,"stream":54}],22:[function(require,module,exports){
+module.exports = ReadyParser;
+
+},{"safe-buffer":3,"stream":54}],21:[function(require,module,exports){
 'use strict';
 const Transform = require('stream').Transform;
+/**
+ * A transform stream that uses a regular expression to split the incoming text upon.
+ * @extends Transform
+ * @example
+To use the `Regex` parser provide a regular expression to split the incoming text upon. Data is emitted as string controllable by the `encoding` option (defaults to `utf8`).
+```js
+const SerialPort = require('serialport');
+const Regex = SerialPort.parsers.Regex;
+const port = new SerialPort('/dev/tty-usbserial1');
+const parser = port.pipe(new Regex({ regex: /[\r\n]+/ }));
+parser.on('data', console.log);
+```
 
-module.exports = class RegexParser extends Transform {
+ */
+class RegexParser extends Transform {
   constructor(options) {
     const opts = Object.assign({
       encoding: 'utf8'
@@ -1601,15 +1653,11 @@ module.exports = class RegexParser extends Transform {
   }
 };
 
-},{"stream":54}],23:[function(require,module,exports){
+module.exports = RegexParser;
+
+},{"stream":54}],22:[function(require,module,exports){
 (function (process){
 'use strict';
-
-/**
- * @module serialport
- * @copyright Chris Williams <chris@iterativedesigns.com>
- */
-
 const Buffer = require('safe-buffer').Buffer;
 const stream = require('stream');
 const util = require('util');
@@ -1687,7 +1735,7 @@ function allocNewReadPool(poolSize) {
 
 /**
  * Create a new serial port object for the `path`. In the case of invalid arguments or invalid options, when constructing a new SerialPort it will throw an error. The port will open automatically by default, which is the equivalent of calling `port.open(openCallback)` in the next tick. You can disable this by setting the option `autoOpen` to `false`.
- * @class
+ * @class SerialPort
  * @param {string} path - The system path of the serial port you want to open. For example, `/dev/tty.XXX` on Mac/Linux, or `COM1` on Windows.
  * @param {module:serialport~openOptions=} options - Port configuration options
  * @param {module:serialport~errorCallback=} openCallback - Called after a connection is opened. If this is not provided and an error occurs, it will be emitted on the port's `error` event. The callback will NOT be called if `autoOpen` is set to `false` in the `openOptions` as the open will not be performed.
@@ -2238,7 +2286,7 @@ SerialPort.list = function(cb) {
 module.exports = SerialPort;
 
 }).call(this,require('_process'))
-},{"_process":39,"debug":25,"safe-buffer":4,"stream":54,"util":59}],24:[function(require,module,exports){
+},{"_process":39,"debug":24,"safe-buffer":3,"stream":54,"util":59}],23:[function(require,module,exports){
 'use strict';
 
 function promisify(func) {
@@ -2263,7 +2311,7 @@ module.exports = {
   promisify
 };
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (process){
 /**
  * This is the web browser implementation of `debug()`.
@@ -2462,7 +2510,7 @@ function localstorage() {
 }
 
 }).call(this,require('_process'))
-},{"./debug":26,"_process":39}],26:[function(require,module,exports){
+},{"./debug":25,"_process":39}],25:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -2689,7 +2737,10 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":3}],27:[function(require,module,exports){
+},{"ms":2}],26:[function(require,module,exports){
+var SerialPort = require('serialport');
+console.log("serialport created")
+},{"serialport":14}],27:[function(require,module,exports){
 
 },{}],28:[function(require,module,exports){
 'use strict'
@@ -7780,8 +7831,8 @@ module.exports = require('./readable').Transform
 module.exports = require('./lib/_stream_writable.js');
 
 },{"./lib/_stream_writable.js":45}],53:[function(require,module,exports){
-arguments[4][4][0].apply(exports,arguments)
-},{"buffer":30,"dup":4}],54:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"buffer":30,"dup":3}],54:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8853,4 +8904,4 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":58,"_process":39,"inherits":57}]},{},[1]);
+},{"./support/isBuffer":58,"_process":39,"inherits":57}]},{},[26]);

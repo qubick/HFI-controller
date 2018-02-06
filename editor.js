@@ -1,7 +1,7 @@
 var container, stats;
 var camera, controls, scene, renderer;
 var originObj, originPoint;
-var objects;
+var objects; //3D objects to add on the scene
 
 init();
 animate();
@@ -62,6 +62,7 @@ function init() {
 
   window.addEventListener( 'mouseup', function() {
   });
+  
   window.addEventListener( 'resize', onWindowResize, false );
 
   //geometry operation
@@ -73,7 +74,6 @@ function init() {
 
   stats = new Stats();
   container.appendChild( stats.dom );
-  
 
 }
 

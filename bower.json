@@ -1,8 +1,8 @@
 {
-	"name": "three.js",
+	"name": "HFIcontroller",
 	"homepage": "http://threejs.org/",
 	"description": "JavaScript 3D library",
-	"main": "build/three.js",
+	"main": "build/editor.js",
 	"keywords": [
 		"three",
 		"threejs",

@@ -59,6 +59,20 @@
     "electron": "^1.6.1"
   },
   "dependencies": {
-    "react-dropzone": "^4.0.0"
+    "array-flatten": "^2.1.1",
+    "content-disposition": "^0.5.2",
+    "content-type": "^1.0.4",
+    "depd": "^1.1.2",
+    "express": "^4.16.2",
+    "finalhandler": "^1.1.0",
+    "http-errors": "^1.6.2",
+    "merge-descriptors": "^1.0.1",
+    "methods": "^1.1.2",
+    "path-to-regexp": "^2.1.0",
+    "qs": "^6.5.1",
+    "react-dropzone": "^4.0.0",
+    "serialport": "^6.0.5",
+    "setprototypeof": "^1.1.0",
+    "utils-merge": "^1.0.1"
   }
 }

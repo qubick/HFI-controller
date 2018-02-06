@@ -12,6 +12,8 @@ Webcam.attach( '#cam' );
 
 function take_snapshot() {
   
+  // console.log("see serialport", SerialPort);
+  
   let imgTag, divTag;
   pausedPrint = 1 - pausedPrint; //toggle status  
   

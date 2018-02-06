@@ -9,8 +9,8 @@
 * build gcode viewer (interpreter) on the editor
 
 ## Reference
-[OpenCV js](https://docs.opencv.org/trunk/d2/df0/tutorial_js_table_of_contents_imgproc.html)
-[OpenCV js examples](https://community.risingstack.com/opencv-tutorial-computer-vision-with-node-js/)
+* [OpenCV js](https://docs.opencv.org/trunk/d2/df0/tutorial_js_table_of_contents_imgproc.html)
+* [OpenCV js examples](https://community.risingstack.com/opencv-tutorial-computer-vision-with-node-js/)
 
 
 1. Get the OpenCV source

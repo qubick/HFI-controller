@@ -3,47 +3,27 @@
 var lrScaleUIAdded = false, topScaleUIAdded = false, modelLoaded = false;
 var leftBoxUI, rightBoxUI, topBoxUI;
 
-var port;
 
 var settings = {
-  model: {
-    'x': 1.0,
-    'y': 1.0,
-    'z': 1.0
-  },
-  modelScale: 1.0,
-  leftBbox: {
-    'x': 1.0,
-    'y': 1.0,
-    'z': 1.0
-  },
-  rightBbox: {
-    'x': 1.0,
-    'y': 1.0,
-    'z': 1.0
-  },
-  topBbox: {
-    'x': 1.0,
-    'y': 1.0,
-    'z': 1.0
-  }
 }
 var panel = new dat.GUI();
 
 var params = {
   loadFile: function(){
-    // document.getElementById("myInput").click();
-    // var stlMesh = loadSTLModel('./models/android.stl', 'ascii');
-    // 
-    //   if( stlMesh ){
-    //     scene.add( stlMesh );
-    //     objects.push( stlMesh ); //objects from editor
-    // 
-    //     panel.add(settings, 'modelScale', -10, 10, 0.1).onChange(function(){
-    //       console.log("stl Mesh: ", stlMesh)
-    //       stlMesh.scale.set(settings.modelScale, settings.modelScale, settings.modelScale);
-    //     });
-    //   }
+    
+    var material = new THREE.LineBasicMaterial({ color: 0x0000ff});
+    var geometry = new THREE.Geometry();
+    
+    // readGcodeFile("cube.gcode");
+    
+    // gcodeObject.forEach(vertex){
+    //   geometry.vertices.push(new THREE.Vector3(vertex.x, vertex.y, vertex.z))
+    //   var line = new Three.Line(geometry, material);
+    // }
+    
+    // scene.add(line);
+    // renderer.render(scene.camera); //render here?
+    
   },
 
   connect:function() {
@@ -72,7 +52,6 @@ function createPanel(){
 
   // modelUI.open();
 }
-
 
 function removePanel(gearType){
   topBoxUI.close();
