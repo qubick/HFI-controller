@@ -1,4 +1,5 @@
 var gcodeObject = [];
+var lines = [];
 
 var openFile = function(event) {
 
@@ -11,7 +12,7 @@ var openFile = function(event) {
     // var node = document.getElementById('output');
     // node.innerText = text;
     
-    var lines = this.result.split('\n');
+    lines = this.result.split('\n');
     console.log("# of lines: ", lines.length);
     // console.log(reader.result.substring(0, 200)); //test printer
     var z = 0; //base height
@@ -41,9 +42,13 @@ var openFile = function(event) {
         
         console.log(mvmt);
       }
-    });
+    }); //EOF forEach()
+    var line = new THREE.Line(slicingGeometry, lineMaterial);
+    console.log(line);
+    scene.add(line);
+    
     // drawLine(); //now it's callstack err
-  };
+  }; //EOF onload()
   reader.readAsText(input.files[0]);
 }
 

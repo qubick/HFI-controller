@@ -73,7 +73,6 @@ function doImageProcessing(){
       //params to findcontours
       let dst1 = cv.Mat.zeros(imgFirst.cols, imgFirst.rows, cv.CV_8UC3);
       let dst2 = cv.Mat.zeros(imgSecnd.cols, imgSecnd.rows, cv.CV_8UC3);
-      //let dst = new cv.Mat();
       
       cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
       cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2GRAY, 0);
@@ -100,13 +99,11 @@ function doImageProcessing(){
                               Math.round(Math.random() * 255));
         cv.drawContours(dst2, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
       }
-
-
-      cv.subtract(dst1, dst2, dst, mask, dtype);
       
-      // let s = new cv.Scalar(255, 0, 0, 255);
-      // cv.copyMakeBorder(imgFirst, dst, 10, 10, 10, 10, cv.BORDER_CONSTANT, s);
+      cv.absdiff(dst2, dst1, dst)//, mask, dtype);
 
+      // cv.absdiff(imgSecnd, imgFirst, dst)//, mask, dtype);
+      
       cv.imshow('subtResult', dst);
       dst.delete();
       // cv.waitKey();

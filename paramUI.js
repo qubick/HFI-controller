@@ -13,8 +13,13 @@ var params = {
     
     document.getElementById('myInput').click(); //bind file opener
     
-    
-    
+    //tentative to load stl
+    // var stlMesh = loadSTLModel('assets/cube.stl', 'ascii');  
+    // if( stlMesh ){
+    //     console.log("add cube stl")
+    //     scene.add( stlMesh );
+    //     objects.push( stlMesh ); //objects from editor
+    //   }
   },
 
   connect:function() {

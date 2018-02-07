@@ -1,14 +1,14 @@
 var container, stats;
 var camera, controls, scene, renderer;
 var originObj, originPoint;
-var objects; //3D objects to add on the scene
+var objects = []; //3D objects to add on the scene
 
 init();
 animate();
 
 var loader = new THREE.STLLoader();
 
-var lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000});
+var lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff});
 var slicingGeometry = new THREE.Geometry();
 
 function init() {
@@ -103,11 +103,11 @@ function render() {
 
 
 function update() {
-  
+
 }
 
-function drawLine() {
-  var line = new THREE.Line(slicingGeometry, lineMaterial);
-  scene.add(line);
-  render(camera);
-}
+// function drawLine() {
+//   var line = new THREE.Line(slicingGeometry, lineMaterial);
+//   scene.add(line);
+//   render(camera);
+// }
