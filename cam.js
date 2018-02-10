@@ -92,6 +92,8 @@ function doImageProcessing(){
                               Math.round(Math.random() * 255));
         cv.drawContours(dst1, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
       }
+      cv.threshold(dst1,dst1,80,255,cv.THRESH_BINARY);
+      
       
       for (let i = 0; i < contours.size(); ++i) {
         //random colors
@@ -99,13 +101,14 @@ function doImageProcessing(){
                               Math.round(Math.random() * 255));
         cv.drawContours(dst2, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
       }
+      cv.threshold(dst2,dst2,80,255,cv.THRESH_BINARY);
       
-      cv.absdiff(dst2, dst1, dst)//, mask, dtype);
-
-      // cv.absdiff(imgSecnd, imgFirst, dst)//, mask, dtype);
       
-      cv.imshow('subtResult', dst);
-      dst.delete();
-      // cv.waitKey();
+      cv.subtract(dst2, dst1, dst, mask, dtype);
+      // cv.absDiff(dst2, dst1, dst);
+      
+      cv.threshold(dst,dst,15,255,cv.THRESH_BINARY);
+      cv.imshow('subtResult', dst2);
+      // dst.delete();
     }
 }
