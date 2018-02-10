@@ -70,45 +70,82 @@ function doImageProcessing(){
       let mask = new cv.Mat();
       let dtype = -1;
       
-      //params to findcontours
-      let dst1 = cv.Mat.zeros(imgFirst.cols, imgFirst.rows, cv.CV_8UC3);
+      //grabCut to detect foreground
+      cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2RGB, 0);
+      let bgdModel = new cv.Mat();
+      let fgdModel = new cv.Mat();
+      let rect = new cv.Rect(50,50,150,150);
+      cv.grabCut(imgSecnd, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
+      
+      //draw foreground
+      for(let i=0; i<imgSecnd.rows; i++){
+        for(let j=0; j<imgSecnd.cols; j++){
+          if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
+            imgSecnd.ucharPtr(i,j)[0] = 255;
+            imgSecnd.ucharPtr(i,j)[1] = 255;
+            imgSecnd.ucharPtr(i,j)[2] = 255;
+          }
+        }
+      }
+      
+      //draw grab Rect
+      let color = new cv.Scalar(0,0,255);
+      let point1 = new cv.Point(rect.x, rect.y);
+      let point2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
+      cv.rectangle(imgSecnd, point1, point2, color);
+      cv.imshow('subtResult1', imgSecnd);
+      
+      
+      // find contour for extracted forground image
       let dst2 = cv.Mat.zeros(imgSecnd.cols, imgSecnd.rows, cv.CV_8UC3);
-      
-      cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
       cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2GRAY, 0);
-      
-      cv.threshold(imgFirst, imgFirst, 120, 200, cv.THRESH_BINARY);
       cv.threshold(imgSecnd, imgSecnd, 120, 200, cv.THRESH_BINARY);
       let contours = new cv.MatVector();
       let hierarchy = new cv.Mat();
-      
-      cv.findContours(imgFirst, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-      cv.findContours(imgSecnd, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-      
-      //find contours for both images
-      for (let i = 0; i < contours.size(); ++i) {
-        //random colors
-        let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
-                              Math.round(Math.random() * 255));
-        cv.drawContours(dst1, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
-      }
-      cv.threshold(dst1,dst1,80,255,cv.THRESH_BINARY);
-      
-      
+      // 
       for (let i = 0; i < contours.size(); ++i) {
         //random colors
         let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                               Math.round(Math.random() * 255));
         cv.drawContours(dst2, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
       }
-      cv.threshold(dst2,dst2,80,255,cv.THRESH_BINARY);
+      
+      //params to findcontours
+      // let dst1 = cv.Mat.zeros(imgFirst.cols, imgFirst.rows, cv.CV_8UC3);
+      // let dst2 = cv.Mat.zeros(imgSecnd.cols, imgSecnd.rows, cv.CV_8UC3);
+      // 
+      // cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
+      // cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2GRAY, 0);
+      // 
+      // cv.threshold(imgFirst, imgFirst, 120, 200, cv.THRESH_BINARY);
+      // cv.threshold(imgSecnd, imgSecnd, 120, 200, cv.THRESH_BINARY);
+      // let contours = new cv.MatVector();
+      // let hierarchy = new cv.Mat();
+      // 
+      // cv.findContours(imgFirst, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+      // cv.findContours(imgSecnd, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+      // 
+      // //find contours for both images
+      // for (let i = 0; i < contours.size(); ++i) {
+      //   //random colors
+      //   let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+      //                         Math.round(Math.random() * 255));
+      //   cv.drawContours(dst1, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+      // }
+      // 
+      // 
+      // for (let i = 0; i < contours.size(); ++i) {
+      //   //random colors
+      //   let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+      //                         Math.round(Math.random() * 255));
+      //   cv.drawContours(dst2, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+      // }
       
       
-      cv.subtract(dst2, dst1, dst, mask, dtype);
-      // cv.absDiff(dst2, dst1, dst);
+      // cv.subtract(dst2, dst1, dst, mask, dtype);
       
-      cv.threshold(dst,dst,15,255,cv.THRESH_BINARY);
-      cv.imshow('subtResult', dst2);
+      // cv.threshold(dst,dst,15,255,cv.THRESH_BINARY);
+      cv.imshow('subtResult2', dst2);
       // dst.delete();
     }
 }
