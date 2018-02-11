@@ -50,13 +50,15 @@ var openFile = function(event) {
         layerCnt = currLayer;
         
         var idx = i+1;
-        if(lines[idx].charAt(0) === "M") //this is to reduce # of regEx. if prob found, replace this with the next code snippet
+        if(lines[idx].charAt(0) === "M") //this is to reduce # of regEx. Only applies to the Cura sliced gcode
           idx += 1;
           
         gcodeChunks = lines[idx].split(' ');
         z = gcodeChunks[4].substr(1); 
       }
-      // var zMove = line.match(/Z\d+.\d/); //change this to find ;LAYER XX
+      
+      //this is common for any type of slicer
+      // var zMove = line.match(/Z\d+.\d/); 
       // 
       // if(zMove){ //otherwise keep the latest z-height
       //   z = zMove[0].substr(1);
