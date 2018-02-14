@@ -58,8 +58,10 @@
 			</div>
 			
 			<!-- dat GUI hidden button -->
-			<input id="myInput" type="file" onchange='openFile(event)' style="visibility:hidden" />
-			
+			<input id="loadFileInput" type="file" onchange='openFile(event)' style="visibility:hidden" />
+			<form method="post" action="/">
+				<input type="submit" id="printStartInput" style="visibility:hidden"/>
+			</form>
 			<script src="bundle.js"></script>
 			
 			<!-- for image processing -->
