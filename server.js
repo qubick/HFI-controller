@@ -22,8 +22,10 @@ app.listen(5555, () => {
 	
 	if(port){
 		console.log("serial port opened to the printer");
-		port.write('M109 S250.000000');
-		port.write('G0 X10 F1800');
+		// port.write('M109 S250.000000\n');
+		port.write('G0 X0 Y0 Z10 F1800\n'); //home all axis
+		port.write('G0 X30 Y100 F1800\n');
+		port.write('G0 Y30\n'); //step by step
 	}
 	else {
 		console.log("failed to open port")
