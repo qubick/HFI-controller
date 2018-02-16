@@ -17,18 +17,19 @@ var Params = function(){
   };
 
   this.print = function() {
-    // port = new SerialPort('/dev/usbmodem1421'); //immediately opens a port
-    // 
-    // port.write('main screen turn on', function(err){
-    //   if (err){
-    //     return console.log('Error on write:', err.message);
-    //   }
-    //   console.log('message written');
-    // });
     
-    //start to send a message
-    // console.log("clicked button: ", document.getElementById('printStartInput'))
-    document.getElementById('printStartInput').click();
+    // var xhr = new XMLHttpRequest();
+    // var channelURL = "http://localhost:8080"; //for now
+    // xhr.open("POST", channelURL);
+    // xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    // 
+    // xhr.send(gcodeWallMvmt); //this is too large
+    var channel = new Channel("general");
+    // gcodeWallMvmt.map((mvmtCmds)=>{ //map() is asynchronous
+    //   console.log("see this is asynchronous: ", mvmtCmds);
+    //   channel.postMessage(mvmtCmds); //send line by line
+    // })
+    channel.postMessage(gcodeWallMvmt); //this is bulk send
   };
 
   this.export = function(){
