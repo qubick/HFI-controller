@@ -1,8 +1,10 @@
 // Should reading gcode be done at the server side?
 
+var gcodeFileName;
 var layer = [];
 var gcodeWallMvmt = [];
 var gcodeSkinMvmt = [];
+var gcodeSegments = []; //not sure yet if this is essential now
 var x = 0, y = 0, z = 0 //movement command
     ,e = 0 //extrusion rate (e stepper)
     ,f = 0 //movement speed & feedrate
@@ -19,6 +21,7 @@ var openFile = (event) => { //this is for preview
 
   var input = event.target;
   var reader = new FileReader();
+  gcodeFileName = event.srcElement.files[0].name;
   
   reader.onload = function(){
     var text = reader.result; //read file input result (gcode)

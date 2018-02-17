@@ -29,7 +29,12 @@ var Params = function(){
     //   console.log("see this is asynchronous: ", mvmtCmds);
     //   channel.postMessage(mvmtCmds); //send line by line
     // })
-    channel.postMessage(gcodeWallMvmt); //this is bulk send
+    var msgCommand = "start"
+    channel.postMessage(msgCommand); //this is bulk send
+    
+    channel.onmessage = function(evt){
+      console.log(evt.data); //check what is evt
+    }
   };
 
   this.export = function(){
