@@ -15,22 +15,27 @@ function take_snapshot() {
   // console.log("see serialport", SerialPort);
   
   let imgTag, divTag;
+  var msgCommand = {};
   pausedPrint = 1 - pausedPrint; //toggle status  
   
-  if(pausedPrint){
+  if(pausedPrint){ //printing is stopped >> change to "start" state
     document.getElementById('snapshotBtn').value = "Resume"
     
     imgTag = "firstImg";
     divTag = "results1";
+    
+    msgCommand["msg"] = "resume"
   }
-  else {
+  else { //printing is running >> change to "pause" state
     document.getElementById('snapshotBtn').value = "Pause Print"
     
     imgTag = "secondImg";
     divTag = "results2";
     
+    msgCommand["msg"] = "pause"
   } //EO-if
   
+  channel.postMessage(msgCommand);
   // newCallback(imgTag, divTag, ()=>{
   //   doImageProcessing();
   // })

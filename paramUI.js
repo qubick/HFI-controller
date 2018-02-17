@@ -3,6 +3,7 @@
 var lrScaleUIAdded = false, topScaleUIAdded = false, modelLoaded = false;
 var leftBoxUI, rightBoxUI, topBoxUI;
 
+var channel = new Channel("general"); // this is for general communication w/ server
 
 // var settings = {
 //   layer = 0.0;
@@ -18,18 +19,14 @@ var Params = function(){
 
   this.print = function() {
     
-    // var xhr = new XMLHttpRequest();
-    // var channelURL = "http://localhost:8080"; //for now
-    // xhr.open("POST", channelURL);
-    // xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    // 
-    // xhr.send(gcodeWallMvmt); //this is too large
-    var channel = new Channel("general");
     // gcodeWallMvmt.map((mvmtCmds)=>{ //map() is asynchronous
     //   console.log("see this is asynchronous: ", mvmtCmds);
     //   channel.postMessage(mvmtCmds); //send line by line
     // })
-    var msgCommand = "start"
+    var msgCommand = {
+      msg: "start"
+      ,file: gcodeFileName //it's determined at fileLoader in gcodeparser
+    }
     channel.postMessage(msgCommand); //this is bulk send
     
     channel.onmessage = function(evt){
