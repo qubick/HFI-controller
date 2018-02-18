@@ -47,7 +47,7 @@
 					<input type=button value="ImgProcessing" onClick="doImageProcessing()" id="snapshotBtn">
 					<input type=button value="Extrude Sketch" onclick="doSketchExtraction()" id="extractBtn">
 				</form>
-		
+
 				<div id="imgs">
 					<div id="results1"></div>
 					<div id="results2" ></div>
@@ -59,20 +59,20 @@
 					<!-- </div> -->
 				</div>
 			</div>
-			
+
 			<!-- dat GUI hidden button -->
 			<input id="loadFileInput" type="file" onchange='openFile(event)' style="visibility:hidden" />
 			<form method="post" action="/">
 				<input type="submit" id="printStartInput" style="visibility:hidden"/>
 			</form>
 			<script src="bundle.js"></script>
-			
+
 			<script type="text/javascript" src="msgChannel.js"></script>
 			<!-- for image processing -->
 			<script type="text/javascript" src="./js/webcam.min.js"></script>
-			<script language="JavaScript" src="cam.js"></script> 
+			<script language="JavaScript" src="cam.js"></script>
 			<script src="./opencvjs/opencv/build_js/bin/opencv.js" type="text/javascript"></script>
-	
+
 			<div id="container" left="150px" top="0px" class="droppable">
 				<script src="./build/three.js"></script>
 				<script src="./build/csg.js"></script>
@@ -91,11 +91,11 @@
 
 				<script src="./js/controls/DragControls.js"></script>
 				<script src="./js/controls/TrackballControls.js"></script>
-				
+
 				<script src="eventHandler.js"></script>
 				<script src="./stl_loader.js"></script>
-				
-				
+
+
 				<!-- <script src="./main.js"></script> -->
 				<script src="./paramUI.js"></script>
 				<script src="./editor.js"></script>

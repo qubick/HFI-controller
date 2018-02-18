@@ -22,11 +22,11 @@ app.get("/", (req, res) => {
 
 app.listen(5555, () => {
 	console.log("HFI controller app listening on port 5555");
-	
+
 	port = new SerialPort('/dev/cu.usbmodem1411', {
 		baudRate: 57600
 	});
-  
+
 	if(port){
 		console.log("serial port opened to the printer");
 		// // port.write('M109 S250.000000\n'); //set temperature and wait until reach for the next command
@@ -55,30 +55,30 @@ app.get(/^(.+)$/, (req, res) => {
 });
 
 http.createServer((req, res) => {
-	
+
 	var parts = req.url.split("/");
 	var clientId = parts[2];
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   if (parts[1] == "register") {
-    clientQueues[clientId] = [];	
-    
+    clientQueues[clientId] = [];
+
   } else if (parts[1] == "ctos") { //recieve msg from the remote user/ar-user app
 		var body = JSON.parse(decodeURIComponent(parts[3]));//, 'base64').toString('binary');
 		console.log(body.commands);
 		var printerBehavior = body.commands.msg;
-		
-		if(body.channelId === "general"){ 
+
+		if(body.channelId === "general"){
 			if(printerBehavior === "start"){
 				console.log("run cmd sender queue");
-				
+
 				var content;
 				var filename = './assets/' + body.commands.file;
 				fs.feadFile(filename, function read(err, data){
 					if(err) throw err;
 					content = data;
 				});
-        
+
 				gcodeCommandsToPrinter = content.split('\n');
 				console.log(gcodeCommandsToPrinter);
 			}
@@ -92,9 +92,7 @@ http.createServer((req, res) => {
 				// port.write("G28 X Y Z\n"); //example: home all axis
 			}
 		}
-		else if (body.channelId === "pauseOrResume"){
-			// do different thing
-		}
+		
 		Object.keys(clientQueues).forEach((otherClientId) => {
         if (otherClientId != clientId) {
           if (pendingResponses[otherClientId]) {
@@ -109,7 +107,7 @@ http.createServer((req, res) => {
   }	else if (parts[0] == "stoc") { //initiate server connection
 		if(res.setHeader("Cache-Control", "no-cache"))
 			console.log("request response has been set, header set to no cache");
-		
+
 		if(clientQueues){
 
 			var item = clientQueues[clientId].shift();
@@ -134,7 +132,7 @@ http.createServer((req, res) => {
 
 function sendCommand(){
 	console.log("start sending commands...");
-	
+
 	// 1. creat Queue if not;
 	// 2. queue will send cmd to printer if queue is not empty
 	// 3. send cmd to the queue step by step
