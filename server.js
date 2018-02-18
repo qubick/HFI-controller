@@ -69,12 +69,13 @@ http.createServer((req, res) => {
 		var printerBehavior = body.commands.msg;
 
 		if(body.channelId === "general"){
+			console.log("curr printer behavior: ", printerBehavior)
 			if(printerBehavior === "start"){
 				console.log("run cmd sender queue");
 
 				var content;
 				var filename = './assets/' + body.commands.file;
-				console.log("filename: ", filename);
+
 				fs.readFile(filename, "utf8", function read(err, data){
 					if(err) throw err;
 					content = data;
@@ -83,12 +84,12 @@ http.createServer((req, res) => {
 				});
 
 			}
-			else if(printerBehavior === "resume"){
+			else if(printerBehavior === "printing"){
 				console.log("restore paused position && resume sending queue")
 				// port.write("G0 X10 F1800\n"); //example pos to return back
 				// port.write("G0 Y10\n");
 			}
-			else if(printerBehavior === "pause"){
+			else if(printerBehavior === "paused"){
 				console.log("store curr position && home all axis ")
 				// port.write("G28 X Y Z\n"); //example: home all axis
 			}

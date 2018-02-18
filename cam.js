@@ -14,6 +14,8 @@ Webcam.attach( '#cam' );
 function take_snapshot() {
 
   let imgTag, divTag;
+  var msgCommand = {};
+
   pausedPrint = 1 - pausedPrint; //toggle status
 
   if(pausedPrint){
@@ -22,15 +24,18 @@ function take_snapshot() {
     divTag = "results1";
 
     //if in the middle of printing, completes the entire layer
-
+    msgCommand["msg"] = "paused"
   }
   else {
     document.getElementById('snapshotBtn').value = "Pause Print"
     imgTag = "secondImg";
     divTag = "results2";
 
+    msgCommand["msg"] = "printing"
   } //EO-if
 
+  channel.postMessage(msgCommand);
+  
   Webcam.snap( (data_uri) => {
 
     capturedImgOjects.push(data_uri);
