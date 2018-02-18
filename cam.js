@@ -2,6 +2,10 @@ var capturedImgOjects = [];
 var pausedPrint = false;
 var capturedforExtraction = false;
 
+//common vars for CV
+let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
+const areaThreshold = 100;
+
 // configure
 Webcam.set({
   width: 320,
@@ -52,8 +56,7 @@ function doImageProcessing(){
       let imgFirst = cv.imread(firstImg);
       let imgSecnd = cv.imread(secondImg);
 
-      //params to operate subtract
-      let dst = new cv.Mat();
+      let dst = new cv.Mat(); //subtraction destination
       let mask = new cv.Mat();
       let dtype = -1;
 
@@ -62,7 +65,6 @@ function doImageProcessing(){
       cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2RGB, 0);
       let bgdModel = new cv.Mat();
       let fgdModel = new cv.Mat();
-      let rect = new cv.Rect(50,10,200,200); //set to printing base size shown in the cam
       cv.grabCut(imgFirst, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
       cv.grabCut(imgSecnd, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
       // cv.imshow('foreground1', imgFirst);
@@ -111,7 +113,7 @@ function doImageProcessing(){
       let newDst = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
       let contours = new cv.MatVector();
       let hierarchy = new cv.Mat();
-      //
+
       cv.findContours(dst, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
       for (let i = 0; i < contours.size(); ++i) {
         //random colors
@@ -148,16 +150,12 @@ function doSketchExtraction(){
   let extractImg = cv.imread(imgSketchExtraction);
 
   //params to operate subtract
-  let dst = new cv.Mat();
   let mask = new cv.Mat();
-  let dtype = -1;
-
   let bgdModel = new cv.Mat();
   let fgdModel = new cv.Mat();
 
   //foreground detection
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2RGB, 0);
-  let rect = new cv.Rect(50,10,200,200); //set to printing base size shown in the cam
   cv.grabCut(extractImg, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
   for(let i=0; i<extractImg.rows; i++){
     for(let j=0; j<extractImg.cols; j++){
@@ -170,7 +168,36 @@ function doSketchExtraction(){
   }
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2GRAY, 0);
   cv.threshold(extractImg, extractImg, 120, 200, cv.THRESH_BINARY);
+  cv.imshow('substResult1', extractImg); //sketch extraction result
 
-  cv.imshow('substResult1', extractImg);
+  let dest = cv.Mat.zeros(extractImg.cols, extractImg.rows, cv.CV_8UC3);
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
+
+  cv.findContours(extractImg, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+  for (let i = 0; i < contours.size(); ++i) {
+    //random colors
+    let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+                          Math.round(Math.random() * 255));
+    cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+  }
+  cv.imshow('substResult2', dest); //contour extraction result
+
+  // console.log(contours.size())
+  for(let j=0; j<contours.size(); j+=2){
+  // do some approximation for smoothing
+  //   var epsilon = 0.1 * cv.arcLength(contour, true);
+  //   var approx = cv.approxPolyDP(contour, epsilon, true);
+  //   console.log(approx);
+    let contour = contours.get(j);
+    let area = cv.contourArea(contour,false);
+    for(let k=0; k<contour.data32F.length; k+=2)
+    if(area > areaThreshold){
+      var x = contour.data32F[k]
+      var y = contour.data32F[k+1]
+
+      console.log("x,y ptr: ", x, y)
+    }
+  } // EOF for
 
 }
