@@ -35,7 +35,7 @@ function take_snapshot() {
   } //EO-if
 
   channel.postMessage(msgCommand);
-  
+
   Webcam.snap( (data_uri) => {
 
     capturedImgOjects.push(data_uri);
@@ -79,7 +79,8 @@ function doImageProcessing(){
       let rect = new cv.Rect(50,10,200,200); //set to printing base size shown in the cam
       cv.grabCut(imgFirst, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
       cv.grabCut(imgSecnd, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
-
+      // cv.imshow('foreground1', imgFirst);
+      // cv.imshow('foreground2', imgSecnd);
       //draw foreground for img1
       for(let i=0; i<imgFirst.rows; i++){
         for(let j=0; j<imgFirst.cols; j++){
@@ -108,8 +109,8 @@ function doImageProcessing(){
       // let point2  = new cv.Point(rect.x + rect.width, rect.y + rect.height);
       // cv.rectangle(imgFirst, point1, point2, color);
       // cv.rectangle(imgSecnd, point1, point2, color);
-      cv.imshow('foreground1', imgFirst);
-      cv.imshow('foreground2', imgSecnd);
+      // cv.imshow('foreground1', imgFirst);
+      // cv.imshow('foreground2', imgSecnd);
 
       //thresholding of the foreground detected imgs to find difference
       cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
@@ -118,7 +119,7 @@ function doImageProcessing(){
       cv.threshold(imgSecnd, imgSecnd, 100, 200, cv.THRESH_BINARY);
 
       cv.subtract(imgSecnd, imgFirst, dst, mask, dtype);
-      // cv.imshow('substResult1', dst);
+      cv.imshow('substResult1', dst);
 
       // find contour for extracted forground images
       let newDst = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
