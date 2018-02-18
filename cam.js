@@ -1,5 +1,6 @@
 var capturedImgOjects = [];
 var pausedPrint = false;
+var capturedforExtraction = false;
 
 // configure
 Webcam.set({
@@ -44,21 +45,6 @@ function take_snapshot() {
       '<img src="'+data_uri+'" id="'+imgTag+'"/>';
   } );
 }
-
-// function newCallback(imgId, divId, callback){ //pausedPrint is a dummy param
-
-  // Webcam.snap( (data_uri) => {
-  //
-  //   capturedImgOjects.push(data_uri);
-  //   document.getElementById(divId).innerHTML =
-  //     'Captured image:' +
-  //     '<img src="'+data_uri+'" id="'+imgId+'"/>';
-  // } );
-  // if(document.getElementById('secondImg')){
-  //   console.log(document.getElementById('secondImg'))
-  //   callback();
-  // }
-// }
 
 function doImageProcessing(){
 
@@ -140,25 +126,50 @@ function doImageProcessing(){
     }
 }
 
+function captureToExtractSketch(){
+  if(!capturedforExtraction){
+    document.getElementById('extractBtn').value = "Extract Image"
+    Webcam.snap( (data_uri) => {
+
+      capturedImgOjects.push(data_uri);
+      document.getElementById("results1").innerHTML =
+        '<img src="'+data_uri+'" id="imgSketchExtraction"/>';
+    });
+  }
+  else{
+    document.getElementById('extractBtn').value = "Capture Sketch"
+    doSketchExtraction();
+  }
+  capturedforExtraction = 1 - capturedforExtraction; //toggle
+}
+
 function doSketchExtraction(){
 
-  Webcam.snap( (data_uri) => {
-
-    capturedImgOjects.push(data_uri);
-    document.getElementById("results1").innerHTML =
-      '<img src="'+data_uri+'" id="imgSketchExtraction"/>';
-  });
-  // document.getElementById("results1")
-    let extractImg = cv.imread(imgSketchExtraction);
-
+  let extractImg = cv.imread(imgSketchExtraction);
 
   //params to operate subtract
   let dst = new cv.Mat();
   let mask = new cv.Mat();
   let dtype = -1;
 
+  let bgdModel = new cv.Mat();
+  let fgdModel = new cv.Mat();
+
+  //foreground detection
+  cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2RGB, 0);
+  let rect = new cv.Rect(50,10,200,200); //set to printing base size shown in the cam
+  cv.grabCut(extractImg, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
+  for(let i=0; i<extractImg.rows; i++){
+    for(let j=0; j<extractImg.cols; j++){
+      if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
+        extractImg.ucharPtr(i,j)[0] = 255;
+        extractImg.ucharPtr(i,j)[1] = 255;
+        extractImg.ucharPtr(i,j)[2] = 255;
+      }
+    }
+  }
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2GRAY, 0);
-  cv.threshold(extractImg, extractImg, 100, 200, cv.THRESH_BINARY);
+  cv.threshold(extractImg, extractImg, 120, 200, cv.THRESH_BINARY);
 
   cv.imshow('substResult1', extractImg);
 
