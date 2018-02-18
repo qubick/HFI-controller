@@ -74,13 +74,14 @@ http.createServer((req, res) => {
 
 				var content;
 				var filename = './assets/' + body.commands.file;
-				fs.feadFile(filename, function read(err, data){
+				console.log("filename: ", filename);
+				fs.readFile(filename, "utf8", function read(err, data){
 					if(err) throw err;
 					content = data;
+					gcodeCommandsToPrinter = content.split('\n');
+
 				});
 
-				gcodeCommandsToPrinter = content.split('\n');
-				console.log(gcodeCommandsToPrinter);
 			}
 			else if(printerBehavior === "resume"){
 				console.log("restore paused position && resume sending queue")
@@ -92,7 +93,7 @@ http.createServer((req, res) => {
 				// port.write("G28 X Y Z\n"); //example: home all axis
 			}
 		}
-		
+
 		Object.keys(clientQueues).forEach((otherClientId) => {
         if (otherClientId != clientId) {
           if (pendingResponses[otherClientId]) {
