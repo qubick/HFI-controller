@@ -4,7 +4,8 @@ var capturedforExtraction = false;
 
 //common vars for CV
 let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
-const areaThreshold = 100;
+const areaThreshold = 40;
+const areaMaxSize = 5000;
 
 // configure
 Webcam.set({
@@ -184,20 +185,32 @@ function doSketchExtraction(){
   cv.imshow('substResult2', dest); //contour extraction result
 
   // console.log(contours.size())
-  for(let j=0; j<contours.size(); j+=2){
+  for(let j=0; j<contours.size(); j++){
   // do some approximation for smoothing
   //   var epsilon = 0.1 * cv.arcLength(contour, true);
   //   var approx = cv.approxPolyDP(contour, epsilon, true);
   //   console.log(approx);
     let contour = contours.get(j);
     let area = cv.contourArea(contour,false);
-    for(let k=0; k<contour.data32F.length; k+=2)
-    if(area > areaThreshold){
-      var x = contour.data32F[k]
-      var y = contour.data32F[k+1]
 
-      console.log("x,y ptr: ", x, y)
+    if((area >= areaThreshold) && (area < areaMaxSize)){
+      var scriptLine = "polygon(points=[";
+      for(let k=0; k<contour.data32F.length; k+=2){
+        var x = contour.data32F[k]
+        var y = contour.data32F[k+1]
+
+        var line = '[' + x + ',' + y + '],'
+        scriptLine += line;
+      } // EOF for k
+      scriptLine = scriptLine.substring(0, scriptLine.length - 1);
+      scriptLine += ']);' //close script line
+      scriptLine = 'linear_extrude(height = 10, center = true, convexity = 10, twist = 0) ' + scriptLine;
+
+      var msg = {
+        msg: "writeFile",
+        script: scriptLine
+      };
+      channel.postMessage(msg);
     }
-  } // EOF for
-
+  } // EOF for j
 }

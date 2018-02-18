@@ -93,6 +93,15 @@ http.createServer((req, res) => {
 				console.log("store curr position && home all axis ")
 				// port.write("G28 X Y Z\n"); //example: home all axis
 			}
+
+			else if(printerBehavior === "writeFile"){
+				var line = body.commands.script;
+				console.log(line);
+				fs.writeFile('./output/test.scad', line, (err)=>{
+				  if(err) return console.log(err);
+				  console.log("openscad file is saved")
+				})
+			}
 		}
 
 		Object.keys(clientQueues).forEach((otherClientId) => {
