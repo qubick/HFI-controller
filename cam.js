@@ -184,33 +184,37 @@ function doSketchExtraction(){
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
-  // console.log(contours.size())
   for(let j=0; j<contours.size(); j++){
-  // do some approximation for smoothing
-  //   var epsilon = 0.1 * cv.arcLength(contour, true);
-  //   var approx = cv.approxPolyDP(contour, epsilon, true);
-  //   console.log(approx);
     let contour = contours.get(j);
     let area = cv.contourArea(contour,false);
 
     if((area >= areaThreshold) && (area < areaMaxSize)){
-      var scriptLine = "polygon(points=[";
-      for(let k=0; k<contour.data32F.length; k+=2){
-        var x = contour.data32F[k]
-        var y = contour.data32F[k+1]
+      // var scriptLine = "polygon(points=["; //for openscad
+      var scriptLine = '';
+      var line = '';
 
-        var line = '[' + x + ',' + y + '],'
+      for(let k=0; k<contour.data32F.length; k+=2){
+        var x = contour.data32F[k];
+        var y = contour.data32F[k+1];
+
+        if( x != undefined, y != undefined)
+          line = '[' + x + ',' + y + '],\n'
+
+  			line = line.replace(/e-43/g,'');
         scriptLine += line;
       } // EOF for k
-      scriptLine = scriptLine.substring(0, scriptLine.length - 1);
-      scriptLine += ']);' //close script line
-      scriptLine = 'linear_extrude(height = 10, center = true, convexity = 10, twist = 0) ' + scriptLine;
+      scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ','
+      //for openscad
+      // scriptLine += ']);' //close script line
+      // scriptLine = 'linear_extrude(height = 10, center = true, convexity = 10, twist = 0) ' + scriptLine;
 
+      scriptLine = 'function main(){ return linear_extrude({height: 1}, polygon([' + scriptLine + '])); }'
       var msg = {
         msg: "writeFile",
         script: scriptLine
       };
       channel.postMessage(msg);
+      break;
     }
   } // EOF for j
 }

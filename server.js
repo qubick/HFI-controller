@@ -96,11 +96,12 @@ http.createServer((req, res) => {
 
 			else if(printerBehavior === "writeFile"){
 				var line = body.commands.script;
-				console.log(line);
-				fs.writeFile('./output/test.scad', line, (err)=>{
+				console.log("newline: ", line);
+				fs.writeFile('./output/test.jscad', line, (err)=>{
 				  if(err) return console.log(err);
-				  console.log("openscad file is saved")
-				})
+
+				});
+
 			}
 		}
 

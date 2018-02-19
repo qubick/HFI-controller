@@ -70,9 +70,9 @@ function Channel(channelId) {
         Channel._serverConnection = new ServerConnection();
         Channel._serverConnection.onmessage = function (evt) {
             var info = JSON.parse(evt.data);
-            
-            console.log("evt: ", evt.data);
-            
+
+            // console.log("evt: ", evt.data);
+
             var channel = Channel._channels[info.channelId];
             if (channel && channel.onmessage)
                 channel.onmessage({ "type": "message", "data": info.message });
