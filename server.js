@@ -2,6 +2,7 @@ var express = require("express");
 var app = express();
 var fs = require("fs");
 var http = require("http");
+var exec = require('child_process').exec, child;
 
 //for serial connection with the printer
 var SerialPort = require("serialport");
@@ -80,7 +81,6 @@ http.createServer((req, res) => {
 					if(err) throw err;
 					content = data;
 					gcodeCommandsToPrinter = content.split('\n');
-
 				});
 
 			}
@@ -97,9 +97,9 @@ http.createServer((req, res) => {
 			else if(printerBehavior === "writeFile"){
 				var line = body.commands.script;
 				console.log("newline: ", line);
-				fs.writeFile('./output/test.jscad', line, (err)=>{
+				fs.writeFile('./output/outfile.jscad', line, (err)=>{
 				  if(err) return console.log(err);
-
+					runCommandline('openjscad ./output/outfile.jscad');
 				});
 
 			}
@@ -149,4 +149,13 @@ function sendCommand(){
 	// 2. queue will send cmd to printer if queue is not empty
 	// 3. send cmd to the queue step by step
 	// 4. wait if the queue is full
+}
+function runCommandline(cmd){
+	console.log("running cmdline jscad");
+	
+	child = exec(cmd, (err, stdout, strerr)=>{
+		console.log('stdout: ' + stdout);
+		if(err)
+			console.log("exec error: ", err)
+	});
 }
