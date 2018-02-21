@@ -97,9 +97,13 @@ http.createServer((req, res) => {
 			else if(printerBehavior === "writeFile"){
 				var line = body.commands.script;
 				console.log("newline: ", line);
-				fs.writeFile('./output/outfile.jscad', line, (err)=>{
+				fs.writeFile('./output/output.jscad', line, (err)=>{
 				  if(err) return console.log(err);
-					runCommandline('openjscad ./output/outfile.jscad');
+
+					let cmd1 = 'openjscad output/output.jscad';
+					let cmd2 = './CuraEngine/build/CuraEngine slice -j ./CuraEngine/resources/definitions/printrbot_play.def.json -e0 -s infill_line_distance=1 -l "output/test.stl" -o "output/test.gcode"';
+					runCommandline(cmd1, cmd2);
+
 				});
 
 			}
@@ -131,7 +135,7 @@ http.createServer((req, res) => {
   } else {
     res.setHeader("Content-Type", "text/html");
   }
-}).listen(8080, () => {
+}).listen(5000, () => {
 	console.log("http channel is listening on 8080");
 });
 
@@ -150,12 +154,13 @@ function sendCommand(){
 	// 3. send cmd to the queue step by step
 	// 4. wait if the queue is full
 }
-function runCommandline(cmd){
+function runCommandline(cmd1, cmd2){
 	console.log("running cmdline jscad");
-	
-	child = exec(cmd, (err, stdout, strerr)=>{
+
+	child = exec(cmd1, (err, stdout, strerr)=>{
 		console.log('stdout: ' + stdout);
 		if(err)
-			console.log("exec error: ", err)
+			console.log("exec error: ", err);
+			// once done, run cmd2 as callback
 	});
 }

@@ -5,7 +5,9 @@ var capturedforExtraction = false;
 //common vars for CV
 let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
 const areaThreshold = 40;
-const areaMaxSize = 5000;
+const areaMaxSize = 6000;
+
+let scaleFactorToBedSize = 10;
 
 // configure
 Webcam.set({
@@ -188,9 +190,12 @@ function doSketchExtraction(){
     let contour = contours.get(j);
     let area = cv.contourArea(contour,false);
 
-    if((area >= areaThreshold) && (area < areaMaxSize)){
+    //post the largest area msg
+    if((area > areaThreshold) && (area < areaMaxSize)){
+
       // var scriptLine = "polygon(points=["; //for openscad
-      var scriptLine = '';
+
+      var scriptLine = ''; //for openJscad
       var line = '';
 
       for(let k=0; k<contour.data32F.length; k+=2){
@@ -200,21 +205,22 @@ function doSketchExtraction(){
         if( x != undefined, y != undefined)
           line = '[' + x + ',' + y + '],\n'
 
-  			line = line.replace(/e-43/g,'');
+  			line = line.replace(/e-4[0-9]+/g,'');
         scriptLine += line;
       } // EOF for k
-      scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ','
+      scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ', & new line char'
+
       //for openscad
       // scriptLine += ']);' //close script line
       // scriptLine = 'linear_extrude(height = 10, center = true, convexity = 10, twist = 0) ' + scriptLine;
 
-      scriptLine = 'function main(){ return linear_extrude({height: 1}, polygon([' + scriptLine + '])); }'
+      scriptLine = 'function main(){ return linear_extrude({height: 1}, polygon([' + scriptLine + '])).scale(' + scaleFactorToBedSize + '); }'
       var msg = {
         msg: "writeFile",
         script: scriptLine
       };
+
       channel.postMessage(msg);
-      break;
     }
   } // EOF for j
 }
