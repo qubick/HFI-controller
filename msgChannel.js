@@ -1,6 +1,6 @@
 //message channel to send msg to server w/o POST message
 // var channelURL = "http://" + serverIP + ":" + messagePort;
-var channelURL = "http://localhost:8080"; //for now
+var channelURL = "http://localhost:5000"; //for now
 
 function ServerConnection() {
     var _this = this;
