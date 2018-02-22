@@ -4,7 +4,7 @@ var capturedforExtraction = false;
 
 //common vars for CV
 let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
-const areaThreshold = 40;
+const areaThreshold = 100;
 const areaMaxSize = 6000;
 
 let scaleFactorToBedSize = 10;
@@ -70,8 +70,7 @@ function doImageProcessing(){
       let fgdModel = new cv.Mat();
       cv.grabCut(imgFirst, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
       cv.grabCut(imgSecnd, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
-      // cv.imshow('foreground1', imgFirst);
-      // cv.imshow('foreground2', imgSecnd);
+
       //draw foreground for img1
       for(let i=0; i<imgFirst.rows; i++){
         for(let j=0; j<imgFirst.cols; j++){
@@ -93,15 +92,6 @@ function doImageProcessing(){
           }
         }
       }
-
-      //draw grab Rect
-      // let color   = new cv.Scalar(0,0,255);
-      // let point1  = new cv.Point(rect.x, rect.y);
-      // let point2  = new cv.Point(rect.x + rect.width, rect.y + rect.height);
-      // cv.rectangle(imgFirst, point1, point2, color);
-      // cv.rectangle(imgSecnd, point1, point2, color);
-      // cv.imshow('foreground1', imgFirst);
-      // cv.imshow('foreground2', imgSecnd);
 
       //thresholding of the foreground detected imgs to find difference
       cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
@@ -209,12 +199,16 @@ function doSketchExtraction(){
         scriptLine += line;
       } // EOF for k
       scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ', & new line char'
-
+      scriptLine = 'var poly = polygon([' + scriptLine + ']);'
       //for openscad
       // scriptLine += ']);' //close script line
       // scriptLine = 'linear_extrude(height = 10, center = true, convexity = 10, twist = 0) ' + scriptLine;
 
-      scriptLine = 'function main(){ return linear_extrude({height: 1}, polygon([' + scriptLine + '])).scale(' + scaleFactorToBedSize + '); }'
+      // var extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, poly)'; //test twist
+      let extrudePtrn = 'return linear_extrude(poly, {height: 5})';
+      let scaleScript = '.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',2])'
+      scriptLine = 'function main(){ ' + scriptLine + extrudePtrn + scaleScript + ';}'
+
       var msg = {
         msg: "writeFile",
         script: scriptLine
