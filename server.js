@@ -2,7 +2,8 @@ var express = require("express");
 var app = express();
 var fs = require("fs");
 var http = require("http");
-var exec = require('child_process').exec, child;
+var exec = require('child_process').execSync, child;
+var colors = require('colors');
 
 //for serial connection with the printer
 var SerialPort = require("serialport");
@@ -15,6 +16,8 @@ var reqIdx = 0;
 
 // for gcodemovments
 var gcodeCommandsToPrinter;
+var queue = require('./queue.js');
+var gcodeQueue = new queue.Queue();
 
 //server main page
 app.get("/", (req, res) => {
@@ -29,11 +32,17 @@ app.listen(5555, () => {
 	});
 
 	if(port){
-		console.log("serial port opened to the printer");
-		// // port.write('M109 S250.000000\n'); //set temperature and wait until reach for the next command
-		// port.write('G0 X0 Y0 Z10 F1800\n'); //home all axis
-		// port.write('G0 X30 Y50 F1800\n'); //text move
-		// port.write('G0 Y30\n'); //step by step
+		console.log('\nSerial port to the 3D printer opened'.magenta.bold);
+		// port.write('M109 S250.000000\n'); //set temperature and wait until reach for the next command
+		port.write('G0 F3600 X30 Y50 \n'); //test move
+		port.write('G0 Y30\n'); //step by step
+		port.write('G0 F1800 X0 Y0 Z0 \n'); //home all axis
+
+		// while (!gcodeQueue.isEmpty){
+		// 	var line = gcodeQueue.pop();
+		// 	port.write(line);
+		// }
+
 	}
 	else {
 		console.log("failed to open port")
@@ -94,14 +103,14 @@ http.createServer((req, res) => {
 				// port.write("G28 X Y Z\n"); //example: home all axis
 			}
 
-			else if(printerBehavior === "writeFile"){
+			else if(printerBehavior === "writeFile"){ //create a openjscad file from geometry,
 				var line = body.commands.script;
 				console.log("newline: ", line);
 				fs.writeFile('./output/output.jscad', line, (err)=>{
 				  if(err) return console.log(err);
 
 					let cmd1 = 'openjscad output/output.jscad';
-					let cmd2 = './CuraEngine/build/CuraEngine slice -j ./CuraEngine/resources/definitions/printrbot_play.def.json -e0 -s infill_line_distance=1 -l "output/test.stl" -o "output/test.gcode"';
+					let cmd2 = './CuraEngine/build/CuraEngine slice -j ./CuraEngine/resources/definitions/printrbot_play.def.json -e0 -s infill_line_distance=1 -l "output/output.stl" -o "output/test.gcode"';
 					runCommandline(cmd1, cmd2);
 
 				});
@@ -136,7 +145,7 @@ http.createServer((req, res) => {
     res.setHeader("Content-Type", "text/html");
   }
 }).listen(5000, () => {
-	console.log("http channel is listening on 8080");
+	console.log("The HTTP message channel is listening on 5000".yellow);
 });
 
 //listening msg from app
@@ -154,13 +163,31 @@ function sendCommand(){
 	// 3. send cmd to the queue step by step
 	// 4. wait if the queue is full
 }
-function runCommandline(cmd1, cmd2){
-	console.log("running cmdline jscad");
 
-	child = exec(cmd1, (err, stdout, strerr)=>{
-		console.log('stdout: ' + stdout);
-		if(err)
-			console.log("exec error: ", err);
-			// once done, run cmd2 as callback
+
+function runCommandline(cmd1, cmd2){
+
+	child = exec(cmd1, (err, stdout, stderr)=>{
+
+		console.log('running openjscad script, stdout: '.magenta + stdout);
+		if(err) console.log("exec error from running openjscad script: ".blue, err);
+	});
+
+	child = exec(cmd2, (err, stdout, stderr)=>{
+		// console.log('running slicer, stdout: '.blue + stdout);
+
+		if(err) console.log('exec error from running slicer: '.blue, err);
+
+		fs.readFile("output/test.gcode", "utf8", (err, data) => {
+			if(err) throw err;
+
+			console.log(data.blue);
+			var gcodes = data.split('\n');
+			for(var a=0; a<100; a++){
+				console.log("writing gcode: ", gcodes[a]);
+				port.write(gcodes[a]+'\n'); //send gcode line by line
+			}
+		});
+
 	});
 }
