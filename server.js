@@ -19,6 +19,8 @@ var gcodeCommandsToPrinter;
 var queue = require('./queue.js');
 var gcodeQueue = new queue.Queue();
 
+var leapMotion = require('./leapMotion.js');
+
 //server main page
 app.get("/", (req, res) => {
 	res.sendfile('index.html')
@@ -27,12 +29,16 @@ app.get("/", (req, res) => {
 app.listen(5555, () => {
 	console.log("HFI controller app listening on port 5555");
 
+	//create connection with the 3D printer
 	port = new SerialPort('/dev/cu.usbmodem1411', {
 		baudRate: 57600
 	});
 
+	//create connection with the leapMotion
+	leapMotion.leapMotion();
+
 	if(port){
-		console.log('\nSerial port to the 3D printer opened'.magenta.bold);
+		console.log('\nSerial port to the 3D printer opened'.magenta);
 		// port.write('M109 S250.000000\n'); //set temperature and wait until reach for the next command
 		port.write('G0 F3600 X30 Y50 \n'); //test move
 		port.write('G0 Y30\n'); //step by step
@@ -145,7 +151,7 @@ http.createServer((req, res) => {
     res.setHeader("Content-Type", "text/html");
   }
 }).listen(5000, () => {
-	console.log("The HTTP message channel is listening on 5000".yellow);
+	console.log("The HTTP message channel is listening on 5000".magenta);
 });
 
 //listening msg from app
