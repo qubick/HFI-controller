@@ -202,9 +202,6 @@ function runCommandline(cmd1, cmd2){
 			console.log("writing gcode: ".blue, gcodeline);
 			port.write(gcodeline + '\n'); //send gcode line by line
 		});
-		// for(var a=0; a<100; a++){
-		// 	console.log("writing gcode: ".blue, gcodes[a]);
-		// 	port.write(gcodes[a]+'\n'); //send gcode line by line
-		// }
+		
 	});
 }
