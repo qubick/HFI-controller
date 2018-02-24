@@ -120,7 +120,12 @@ http.createServer((req, res) => {
 				  if(err) return console.log(err);
 
 					let cmd1 = 'openjscad output/output.jscad';
-					let cmd2 = './CuraEngine/build/CuraEngine slice -j ./CuraEngine/resources/definitions/printrbot_play.def.json -e0 -l "output/output.stl" -o "output/test.gcode"';
+					let cmd2 = './CuraEngine/build/CuraEngine slice -j ./CuraEngine/resources/definitions/printrbot_play.def.json -e0 -l "output/output.stl" -o "output/test.gcode"'
+
+
+					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
+					// cmd2 += '-s speed_print_layer_0="10" -s speed_wall_x="10" -s speed_topbottom="30"'
+
 					runCommandline(cmd1, cmd2);
 
 				});
@@ -202,6 +207,6 @@ function runCommandline(cmd1, cmd2){
 			console.log("writing gcode: ".blue, gcodeline);
 			port.write(gcodeline + '\n'); //send gcode line by line
 		});
-		
+
 	});
 }
