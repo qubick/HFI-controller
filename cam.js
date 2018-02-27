@@ -2,6 +2,10 @@ var capturedImgOjects = [];
 var pausedPrint = false;
 var capturedforExtraction = false;
 
+//sketch extrusion type
+var capturedToExtrude = false;
+var capturedToRevolve = false;
+
 //common vars for CV
 let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
 const areaThreshold = 100;
@@ -122,20 +126,40 @@ function doImageProcessing(){
 }
 
 function captureToExtractSketch(){
+  let clickedBtnID = window.event.target.id;
+
   if(!capturedforExtraction){
-    document.getElementById('extractBtn').value = "Extract Image"
+    // first capture image
     Webcam.snap( (data_uri) => {
 
       capturedImgOjects.push(data_uri);
       document.getElementById("results1").innerHTML =
         '<img src="'+data_uri+'" id="imgSketchExtraction"/>';
     });
+
+    // toggle button
+
+    if(clickedBtnID === 'extrudeBtn')
+      document.getElementById('extrudeBtn').value = "Extract Image"
+    else if(clickedBtnID === 'revolveBtn')
+      document.getElementById('revolveBtn').value = "Extract Image"
+    else if(clickedBtnID === 'twistBtn')
+      document.getElementById('twistBtn').value = "Extract Image"
+
   }
   else{
-    document.getElementById('extractBtn').value = "Capture Sketch"
+
+    if(clickedBtnID === 'extrudeBtn')
+      document.getElementById('extrudeBtn').value = "Capture to extrude"
+    else if(clickedBtnID === 'revolveBtn')
+      document.getElementById('revolveBtn').value = "Capture to revolve"
+    else if(clickedBtnID === 'twistBtn')
+      document.getElementById('twistBtn').value = "Capture to revolve"
+
     doSketchExtraction();
   }
   capturedforExtraction = 1 - capturedforExtraction; //toggle
+
 }
 
 function doSketchExtraction(){
@@ -183,10 +207,13 @@ function doSketchExtraction(){
     //post the largest area msg
     if((area > areaThreshold) && (area < areaMaxSize)){
 
-      // var scriptLine = "polygon(points=["; //for openscad
+      //for openscad
+      // var scriptLine = "polygon(points=[";
 
-      var scriptLine = ''; //for openJscad
-      var line = '';
+      //for openJscad
+      var scriptLine = ''
+        , extrudePtrn = ''
+        , line = '';
 
       for(let k=0; k<contour.data32F.length; k+=2){
         var x = contour.data32F[k];
@@ -199,15 +226,22 @@ function doSketchExtraction(){
         scriptLine += line;
       } // EOF for k
       scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ', & new line char'
-      scriptLine = 'var poly = polygon([' + scriptLine + ']);'
+      scriptLine = 'var poly = polygon([' + scriptLine + ']);'//.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',1]) \n'
+
       //for openscad
       // scriptLine += ']);' //close script line
       // scriptLine = 'linear_extrude(height = 10, center = true, convexity = 10, twist = 0) ' + scriptLine;
 
-      // var extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, poly)'; //test twist
-      let extrudePtrn = 'return linear_extrude(poly, {height: 5})';
-      let scaleScript = '.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',2])'
-      scriptLine = 'function main(){ ' + scriptLine + extrudePtrn + scaleScript + ';}'
+
+      if(clickedBtnID === 'extrudeBtn')
+        extrudePtrn = 'return linear_extrude(poly)' //,;
+      else if(clickedBtnID === 'revolveBtn')
+        extrudePtrn = 'return rotate_extrude(poly)' //, {fn: 100})';
+      else if(clickedBtnID === 'twistBtn')
+        extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, poly)'; //test twist
+
+
+      scriptLine = 'function main(){ ' + scriptLine + extrudePtrn + ';}' //close main
 
       var msg = {
         msg: "writeFile",

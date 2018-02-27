@@ -45,7 +45,9 @@
 				<form>
 					<input type=button value="Pause print" onClick="take_snapshot()" id="snapshotBtn">
 					<input type=button value="ImgProcessing" onClick="doImageProcessing()" id="snapshotBtn">
-					<input type=button value="Capture Sketch" onclick="captureToExtractSketch()" id="extractBtn">
+					<input type=button value="Capture to extrude" onclick="captureToExtractSketch()" id="extrudeBtn">
+					<input type=button value="Capture to revolve" onclick="captureToExtractSketch()" id="revolveBtn">
+					<input type=button value="Capture to twist" onclick="captureToExtractSketch()" id="twistBtn">
 				</form>
 
 				<div id="imgs">
@@ -68,7 +70,7 @@
 			<script src="bundle.js"></script>
 
 			<script type="text/javascript" src="msgChannel.js"></script>
-			
+
 			<!-- for image processing -->
 			<script src="./opencvjs/opencv/build_js/bin/opencv.js" type="text/javascript"></script>
 			<script type="text/javascript" src="./js/webcam.min.js"></script>
