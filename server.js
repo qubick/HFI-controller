@@ -62,7 +62,6 @@ app.listen(5555, () => {
 //for start printing, will replace this with message channel
 app.post('/', (req, res) => {
 	console.log("POST message recieved from the app")
-	console.log(req.body);
 	// res.send(200); //no response w/ ('ok') message
 	res.sendfile('index.html'); //refresh screen
 
@@ -91,7 +90,7 @@ http.createServer((req, res) => {
 		if(body.channelId === "general"){
 			console.log("curr printer behavior: ", printerBehavior)
 			if(printerBehavior === "start"){
-				console.log("run cmd sender queue");
+				console.log('[Server]'.magenta, "run cmd sender queue");
 
 				var content;
 				var filename = './assets/' + body.commands.file;
@@ -104,25 +103,25 @@ http.createServer((req, res) => {
 
 			}
 			else if(printerBehavior === "printing"){
-				console.log("restore paused position && resume sending queue")
+				console.log('[Server]'.magenta, "restore paused position && resume sending queue")
 				// port.write("G0 X10 F1800\n"); //example pos to return back
 				// port.write("G0 Y10\n");
 			}
 			else if(printerBehavior === "paused"){
-				console.log("store curr position && home all axis ")
+				console.log('[Server]'.magenta, "store curr position && home all axis ")
 				// port.write("G28 X Y Z\n"); //example: home all axis
 			}
 
 			else if(printerBehavior === "writeFile"){ //create a openjscad file from geometry,
 				var line = body.commands.script;
-				console.log("newline: ", line);
+
 				fs.writeFile('./output/output.jscad', line, (err)=>{
 				  if(err) return console.log(err);
 
 					let cmd1 = 'openjscad output/output.jscad';
 					let cmd2 = './CuraEngine/build/CuraEngine slice -j ./CuraEngine/resources/definitions/printrbot_play.def.json -e0 -l "output/output.stl" -o "output/test.gcode"'
 
-
+					// slicer settings for later
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
 					// cmd2 += '-s speed_print_layer_0="10" -s speed_wall_x="10" -s speed_topbottom="30"'
 
@@ -146,7 +145,6 @@ http.createServer((req, res) => {
     res.end();
   }	else if (parts[0] == "stoc") { //initiate server connection
 		if(res.setHeader("Cache-Control", "no-cache"))
-			console.log("request response has been set, header set to no cache");
 
 		if(clientQueues){
 
@@ -173,7 +171,7 @@ http.createServer((req, res) => {
 function sendCommand(){
 	console.log("start sending commands...");
 
-	// 1. creat Queue if not;
+	// 1. create a Queue if not defined;
 	// 2. queue will send cmd to printer if queue is not empty
 	// 3. send cmd to the queue step by step
 	// 4. wait if the queue is full
@@ -182,10 +180,11 @@ function sendCommand(){
 
 function runCommandline(cmd1, cmd2){
 
-	console.log("runnding two commands..")
+	console.log("\n[Server]".magenta, "run openjscand && curaengine to generate gcode..")
 
 	child = exec(cmd1, (err, stdout, stderr)=>{
-		console.log('running openjscad script, stdout: '.magenta + stdout);
+		// console.log('running openjscad script, stdout: '.blue + stdout);
+
 		if(err) console.log("exec error from running openjscad script: ".blue, err);
 		if(stderr) console.log('\n[Server]'.magenta, strerr.red);
 	});
@@ -193,6 +192,7 @@ function runCommandline(cmd1, cmd2){
 	//once the 1st cmd (run openjscad) done
 	child = exec(cmd2, (err, stdout, stderr)=>{
 		// console.log('running slicer, stdout: '.blue + stdout);
+
 		if(err) console.log('exec error from running slicer: '.blue, err);
 		if(stderr) console.log('\n[Server]'.magenta, strerr.red);
 	});
@@ -204,7 +204,7 @@ function runCommandline(cmd1, cmd2){
 		// console.log(data.blue);
 		var gcodes = data.split('\n');
 		gcodes.forEach((gcodeline) =>{
-			console.log("writing gcode: ".blue, gcodeline);
+			// console.log("writing gcode: ".blue, gcodeline);
 			port.write(gcodeline + '\n'); //send gcode line by line
 		});
 

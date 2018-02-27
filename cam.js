@@ -226,7 +226,7 @@ function doSketchExtraction(){
         scriptLine += line;
       } // EOF for k
       scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ', & new line char'
-      scriptLine = 'var poly = polygon([' + scriptLine + ']);'//.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',1]) \n'
+      // scriptLine = 'var poly = polygon([' + scriptLine + ']);'//.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',1]) \n'
 
       //for openscad
       // scriptLine += ']);' //close script line
@@ -234,14 +234,14 @@ function doSketchExtraction(){
 
 
       if(clickedBtnID === 'extrudeBtn')
-        extrudePtrn = 'return linear_extrude(poly)' //,;
+        extrudePtrn = 'return linear_extrude({height:5}, polygon([' + scriptLine + '])).scale([10,10,1]);' //,;
       else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = 'return rotate_extrude(poly)' //, {fn: 100})';
+        extrudePtrn = 'return rotate_extrude(polygon([' + scriptLine + '])).scale([10,10,1]);' //, {fn: 100})';
       else if(clickedBtnID === 'twistBtn')
-        extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, poly)'; //test twist
+        extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, polygon([' + scriptLine + '])).scale([10,10,1]);' //test twist
 
 
-      scriptLine = 'function main(){ ' + scriptLine + extrudePtrn + ';}' //close main
+      scriptLine = 'function main(){ ' + extrudePtrn + '}' //close main
 
       var msg = {
         msg: "writeFile",

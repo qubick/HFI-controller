@@ -1,3 +1,5 @@
+// Main editor for user interaction on the screen & preview
+
 var container, stats;
 var camera, controls, scene, renderer;
 var originObj, originPoint;
@@ -63,13 +65,21 @@ function init() {
   controls.addEventListener( 'change', function() {
   } );
 
-  window.addEventListener( 'mousedown', function () {    
+  window.addEventListener( 'mousedown', function () {
   }, false );
 
   window.addEventListener( 'mouseup', function() {
   });
-  
+
   window.addEventListener( 'resize', onWindowResize, false );
+
+  window.addEventListener('click', function(e) {
+    e = e || window.event;
+    var target = e.target || e.srcElement
+        // ,text = target.textContent || text.innerText;
+    clickedBtnID = window.event.target.id
+  }, false);
+
 
   //geometry operation
   var materialNormal = new THREE.MeshNormalMaterial();
