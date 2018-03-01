@@ -190,13 +190,25 @@ function doSketchExtraction(){
   let dest = cv.Mat.zeros(extractImg.cols, extractImg.rows, cv.CV_8UC3);
   let contours = new cv.MatVector();
   let hierarchy = new cv.Mat();
+  let poly = new cv.MatVector();
 
   cv.findContours(extractImg, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+  for (let u = 0; u < contours.size(); ++u) {
+    let tmp = new cv.Mat();
+    let cnt = contours.get(u);
+    cv.approxPolyDP(cnt, tmp, 0, true);
+    poly.push_back(tmp);
+
+    cnt.delete(); tmp.delete();
+  }
+
   for (let i = 0; i < contours.size(); ++i) {
-    //random colors
+
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                           Math.round(Math.random() * 255));
-    cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0);
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
@@ -221,23 +233,30 @@ function doSketchExtraction(){
         y: contour.data32F[1]
       }
 
+      var hashX = [], hashY = [];
+
       for(let k=0; k<contour.data32F.length; k+=2){
         var x = contour.data32F[k] //- initialPoint.x;
         var y = contour.data32F[k+1] //- initialPoint.y;
 
-        if( x != undefined, y != undefined){
+        // if(hashX[x] === undefined && hashY[y] === undefined){ //only when the same pts is not detected
           line = '[' + x + ',' + y + '],\n'
 
           //for debug purpose -- check if curve is self intersecting
-          var polyPos = {
-            x: x,
-            y: y
-          }
-          curveFromCam.push(polyPos);
-        }
+        //   var polyPos = {
+        //     x: parseFloat(x),
+        //     y: parseFloat(y)
+        //   }
+        //   curveFromCam.push(polyPos);
+        // }
 
-  			line = line.replace(/e-4[0-9]+/g,'');
-        scriptLine += line;
+    			line = line.replace(/e-4[0-9]+/g,'');
+          scriptLine += line;
+
+        //   hashX[x] = true; //found
+        //   hashY[y] = true;
+        //
+        // } //EOF if
       } // EOF for k
       scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ', & new line char'
       // scriptLine = 'var poly = polygon([' + scriptLine + ']);'//.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',1]) \n'
@@ -248,11 +267,11 @@ function doSketchExtraction(){
 
 
       if(clickedBtnID === 'extrudeBtn')
-        extrudePtrn = 'return linear_extrude({height:5}, polygon([' + scriptLine + '])).scale([10,10,1]);' //,;
+        extrudePtrn = 'return linear_extrude({height:5}, polygon([' + scriptLine + '])).scale([50,50,2]);' //,;
       else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = 'return rotate_extrude(polygon([' + scriptLine + '])).scale([10,10,1]);' //, {fn: 100})';
+        extrudePtrn = 'return rotate_extrude(polygon([' + scriptLine + '])).scale([50,50,2]);' //, {fn: 100})';
       else if(clickedBtnID === 'twistBtn')
-        extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, polygon([' + scriptLine + '])).scale([10,10,1]);' //test twist
+        extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, polygon([' + scriptLine + '])).scale([50,50,2]);' //test twist
 
 
       scriptLine = 'function main(){ ' + extrudePtrn + '}' //close main
