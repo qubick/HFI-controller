@@ -10,7 +10,7 @@ var capturedToRevolve = false;
 let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
 const areaThreshold = 100;
 const areaMaxSize = 6000;
-
+let initialPoint = {};
 let scaleFactorToBedSize = 10;
 
 // configure
@@ -150,11 +150,11 @@ function captureToExtractSketch(){
   else{
 
     if(clickedBtnID === 'extrudeBtn')
-      document.getElementById('extrudeBtn').value = "Capture to extrude"
+      document.getElementById('extrudeBtn').value = "Capture to Extrude"
     else if(clickedBtnID === 'revolveBtn')
-      document.getElementById('revolveBtn').value = "Capture to revolve"
+      document.getElementById('revolveBtn').value = "Capture to Revolve"
     else if(clickedBtnID === 'twistBtn')
-      document.getElementById('twistBtn').value = "Capture to revolve"
+      document.getElementById('twistBtn').value = "Capture to Twist"
 
     doSketchExtraction();
   }
@@ -202,7 +202,7 @@ function doSketchExtraction(){
 
   for(let j=0; j<contours.size(); j++){
     let contour = contours.get(j);
-    let area = cv.contourArea(contour,false);
+    let area = cv.contourArea(contour, false);
 
     //post the largest area msg
     if((area > areaThreshold) && (area < areaMaxSize)){
@@ -215,12 +215,26 @@ function doSketchExtraction(){
         , extrudePtrn = ''
         , line = '';
 
-      for(let k=0; k<contour.data32F.length; k+=2){
-        var x = contour.data32F[k];
-        var y = contour.data32F[k+1];
+      // to center points later;
+      initialPoint = {
+        x: contour.data32F[0],
+        y: contour.data32F[1]
+      }
 
-        if( x != undefined, y != undefined)
+      for(let k=0; k<contour.data32F.length; k+=2){
+        var x = contour.data32F[k] //- initialPoint.x;
+        var y = contour.data32F[k+1] //- initialPoint.y;
+
+        if( x != undefined, y != undefined){
           line = '[' + x + ',' + y + '],\n'
+
+          //for debug purpose -- check if curve is self intersecting
+          var polyPos = {
+            x: x,
+            y: y
+          }
+          curveFromCam.push(polyPos);
+        }
 
   			line = line.replace(/e-4[0-9]+/g,'');
         scriptLine += line;
