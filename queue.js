@@ -11,8 +11,8 @@ exports.Queue = function(){
   this.first = null;
   this.last = null;
 
-  console.log('\nAn empty gcode queue is created'.red);
-  
+  console.log('\n[Queue]'.cyan, 'An empty gcode queue is created');
+
   this.isFull = function(){
     if(itemCnt === maxQueueSize)
       return true;

@@ -9,9 +9,10 @@ var colors = require('colors');
 
 //for serial connection with the printer
 var SerialPort = require("serialport");
-var port = new SerialPort('/dev/cu.usbmodem1411', {
-	baudRate: 57600
-});
+var port;
+// = new SerialPort('/dev/cu.usbmodem1411', {
+// 	baudRate: 57600
+// });
 
 //for message channel with the client
 var pendingResponses = {};
@@ -34,9 +35,9 @@ app.listen(5555, () => {
 	console.log('[Server]'.magenta, ' HFI controller app listening on port 5555'.white);
 
 	//create connection with the 3D printer
-	// port = new SerialPort('/dev/cu.usbmodem1411', {
-	// 	baudRate: 57600
-	// });
+	port = new SerialPort('/dev/cu.usbmodem1411', {
+		baudRate: 57600
+	});
 
 	//create connection with the leapMotion
 	leapMotion.leapMotion();
@@ -88,7 +89,8 @@ http.createServer((req, res) => {
 		var printerBehavior = body.commands.msg;
 
 		if(body.channelId === "general"){
-			console.log("curr printer behavior: ", printerBehavior)
+			console.log('[Server]'.magenta, "curr printer behavior: ", printerBehavior)
+
 			if(printerBehavior === "start"){
 				console.log('[Server]'.magenta, "run cmd sender queue");
 
@@ -99,6 +101,8 @@ http.createServer((req, res) => {
 					if(err) throw err;
 					content = data;
 					gcodeCommandsToPrinter = content.split('\n');
+
+					sendCommand();
 				});
 
 			}
@@ -125,10 +129,9 @@ http.createServer((req, res) => {
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
 					// cmd2 += '-s speed_print_layer_0="10" -s speed_wall_x="10" -s speed_topbottom="30"'
 
-					runCommandline(cmd1, cmd2);
+					runShellCommands(cmd1, cmd2);
 
 				});
-
 			}
 		}
 
@@ -172,41 +175,60 @@ function sendCommand(){
 	console.log("start sending commands...");
 
 	// 1. create a Queue if not defined;
-	// 2. queue will send cmd to printer if queue is not empty
-	// 3. send cmd to the queue step by step
-	// 4. wait if the queue is full
+	// 2. read existing gcode file >> save in the queue
+	// 	2-1. queue will send cmd to printer if queue is not empty
+	// 3. wait if the queue is full, retry to send
 }
 
 
-function runCommandline(cmd1, cmd2){
+function runShellCommands(cmd1, cmd2){
 
-	console.log("\n[Server]".magenta, "run openjscand && curaengine to generate gcode..")
+	console.log("\n[Server]".magenta, "run openjscand to generate STL from polygons")
+	try {
+		child = exec(cmd1, (err, stdout, stderr)=>{
+			// console.log('running openjscad script, stdout: '.blue + stdout);
 
-	child = exec(cmd1, (err, stdout, stderr)=>{
-		// console.log('running openjscad script, stdout: '.blue + stdout);
-
-		if(err) console.log("exec error from running openjscad script: ".blue, err);
-		if(stderr) console.log('\n[Server]'.magenta, strerr.red);
-	});
+			if(err) console.log("exec error from running openjscad script: ".blue, err);
+			if(stderr) console.log('\n[Server]'.magenta, strerr.red);
+		});
+	}
+	catch(e){
+		console.log('[Server]'.magenta, 'failed to run Openjscad script: ', e)
+	}
 
 	//once the 1st cmd (run openjscad) done
-	child = exec(cmd2, (err, stdout, stderr)=>{
-		// console.log('running slicer, stdout: '.blue + stdout);
+	console.log("\n[Server]".magenta, "run curaengine to generate gcode..")
+	try {
+		child = exec(cmd2, (err, stdout, stderr)=>{
+			// console.log('running slicer, stdout: '.blue + stdout);
 
-		if(err) console.log('exec error from running slicer: '.blue, err);
-		if(stderr) console.log('\n[Server]'.magenta, strerr.red);
-	});
+			if(err) console.log('exec error from running slicer: '.blue, err);
+			if(stderr) console.log('\n[Server]'.magenta, strerr.red);
+		});
+	}
+	catch(e) {
+		console.log('[Server]'.magenta, 'failed to run CuraEngine slicer: ', e)
+	}
 
-	//once the 2nd cmd (run cura engine)
+
+	//once the 2nd cmd (run cura engine) done, read gcode file and send to the printer queue
 	fs.readFile("output/test.gcode", "utf8", (err, data) => {
 		if(err) throw err;
 
 		// console.log(data.blue);
 		var gcodes = data.split('\n');
-		gcodes.forEach((gcodeline) =>{
+		gcodes.forEach((gcodeline) =>{ //this should be running background until it is paused
 			// console.log("writing gcode: ".blue, gcodeline);
-			port.write(gcodeline + '\n'); //send gcode line by line
-		});
 
-	});
+			// if(printerBehavior === 'paused')
+			// 	gcodes = []; //clear read gcodes >> this will break the forEach, stop to queue
+				// gcodes.splice(0, gcode.length);
+				// gcodes.length = 0;
+
+			// if(queue isFull) wait(100);
+
+			port.write(gcodeline + '\n'); //replace this to send gcode to queue
+
+		});
+	}); //EOF readfile
 }
