@@ -223,23 +223,23 @@ function doSketchExtraction(){
       // var scriptLine = "polygon(points=[";
 
       //for openJscad
-      var scriptLine = ''
+      var scriptLine = 'var poly = polygon(['
         , extrudePtrn = ''
         , line = ''
         , contourCnt = contour.data32F.length;
-      // to center points later;
 
+      //to center polygon
       let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
       translateScript = translateScript.replace(/e-4[0-9]+/g,'');
 
-      console.log("translate point: ", translateScript);
+      // to rotate for revolve
+      let rotateScript = '.rotateZ(90)'
 
       //do not translate vertices manually
       for(let k=0; k<contourCnt; k+=2){
         var x = contour.data32F[k] //- initialPoint.x;
         var y = contour.data32F[k+1] //- initialPoint.y;
 
-        // if(hashX[x] === undefined && hashY[y] === undefined){ //only when the same pts is not detected
           line = '[' + x + ',' + y + '],\n'
 
           //for debug purpose -- check if curve is self intersecting
@@ -251,14 +251,10 @@ function doSketchExtraction(){
         // }
 
     			line = line.replace(/e-4[0-9]+/g,'');
-          scriptLine += line;
+          scriptLine += line; //center
 
-        //   hashX[x] = true; //found
-        //   hashY[y] = true;
-        //
-        // } //EOF if
       } // EOF for k
-      scriptLine = scriptLine.substring(0, scriptLine.length - 2); //splice last ', & new line char'
+      scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
       // scriptLine = 'var poly = polygon([' + scriptLine + ']);'//.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',1]) \n'
 
       //for openscad
@@ -267,14 +263,15 @@ function doSketchExtraction(){
 
 
       if(clickedBtnID === 'extrudeBtn')
-        extrudePtrn = 'return linear_extrude({height:5}, polygon([' + scriptLine + '])' + translateScript + ').scale([10,10,2]);' //,;
+        extrudePtrn = '\n return linear_extrude({height:5}, poly).scale([10,10,2]);' //,;
       else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = 'return rotate_extrude(polygon([' + scriptLine +'])' + translateScript + ').scale([10,10,2]);' //, {fn: 100})';
+        extrudePtrn = '\n return rotate_extrude(poly);' //, {fn: 100})';
       else if(clickedBtnID === 'twistBtn')
-        extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, polygon([' + scriptLine + '])).scale([50,50,2]);' //test twist
+        extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([50,50,2]);' //test twist
 
 
-      scriptLine = 'function main(){ ' + extrudePtrn + '}' //close main
+      //rotate might not useful for linear/twist extrusion; see details for later
+      scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
 
       var msg = {
         msg: "writeFile",
