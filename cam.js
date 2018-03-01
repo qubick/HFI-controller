@@ -225,17 +225,17 @@ function doSketchExtraction(){
       //for openJscad
       var scriptLine = ''
         , extrudePtrn = ''
-        , line = '';
-
+        , line = ''
+        , contourCnt = contour.data32F.length;
       // to center points later;
-      initialPoint = {
-        x: contour.data32F[0],
-        y: contour.data32F[1]
-      }
 
-      var hashX = [], hashY = [];
+      let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
+      translateScript = translateScript.replace(/e-4[0-9]+/g,'');
 
-      for(let k=0; k<contour.data32F.length; k+=2){
+      console.log("translate point: ", translateScript);
+
+      //do not translate vertices manually
+      for(let k=0; k<contourCnt; k+=2){
         var x = contour.data32F[k] //- initialPoint.x;
         var y = contour.data32F[k+1] //- initialPoint.y;
 
@@ -267,9 +267,9 @@ function doSketchExtraction(){
 
 
       if(clickedBtnID === 'extrudeBtn')
-        extrudePtrn = 'return linear_extrude({height:5}, polygon([' + scriptLine + '])).scale([50,50,2]);' //,;
+        extrudePtrn = 'return linear_extrude({height:5}, polygon([' + scriptLine + '])' + translateScript + ').scale([10,10,2]);' //,;
       else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = 'return rotate_extrude(polygon([' + scriptLine + '])).scale([50,50,2]);' //, {fn: 100})';
+        extrudePtrn = 'return rotate_extrude(polygon([' + scriptLine +'])' + translateScript + ').scale([10,10,2]);' //, {fn: 100})';
       else if(clickedBtnID === 'twistBtn')
         extrudePtrn = 'return linear_extrude({height: 5, twist: 90}, polygon([' + scriptLine + '])).scale([50,50,2]);' //test twist
 
