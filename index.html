@@ -43,10 +43,10 @@
 				<div id="cam"></div>
 				<form>
 					<input type=button value="Pause print" onClick="take_snapshot()" id="snapshotBtn">
-					<input type=button value="ImgProcessing" onClick="doImageProcessing()" id="snapshotBtn">
+					<input type=button value="ImgProcessing" onClick="foregroundDetection()" id="snapshotBtn">
 					<br/>
 					Set Height:
-					<input type=text id="extrudeHeightInput">
+					<input type=text value="5" id="extrudeHeightInput">
 					<br/>
 					<!-- <input type=button value="Set height" onclick="getExtrudeHeight()" id="submitHeight"> -->
 					<input type=button value="Capture to extrude" onclick="captureToExtractSketch()" id="extrudeBtn">

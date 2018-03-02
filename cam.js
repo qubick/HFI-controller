@@ -7,6 +7,10 @@ var capturedToExtrude = false;
 var capturedToRevolve = false;
 
 //common vars for CV
+let mask = new cv.Mat();
+let dst = new cv.Mat(); //subtraction destination
+let dtype = -1;
+
 let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
 const areaThreshold = 100;
 const areaMaxSize = 6000;
@@ -75,10 +79,6 @@ function foregroundDetection(){
       let imgFirst = cv.imread(firstImg);
       let imgSecnd = cv.imread(secondImg);
 
-      let dst = new cv.Mat(); //subtraction destination
-      let mask = new cv.Mat();
-      let dtype = -1;
-
       //grabCut to detect foreground
       cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2RGB, 0);
       cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2RGB, 0);
@@ -134,7 +134,7 @@ function foregroundDetection(){
       }
 
       cv.imshow('substResult2', dstForeground);
-      dst.delete();
+
       dstForeground.delete();
     }
 } //EOF func foregroundDetection (foreground detection & thresholding)
@@ -183,10 +183,8 @@ function removeColor(imgReference, color){
   let red = [], green = [], blue = [65,120,225,225]
     , lime = [173, 255, 47, 255];
 
-  color = blue;
+  color = lime;
 
-  console.log("img reference: ", imgReference);
-  // imgReference doesn't matter now
   let src = cv.imread(imgSketchExtraction); //this is creating a cv.Mat()
   // let areaToRemove = new cv.Mat();
 
@@ -194,6 +192,9 @@ function removeColor(imgReference, color){
   let low = new cv.Mat(src.rows, src.cols, src.type(), [0, 0, 0, 0]);
   let high = new cv.Mat(src.rows, src.cols, src.type(), color);
   cv.inRange(src, low, high, areaToRemove);
+
+
+  // cv.subtract(src, areaToRemove, dst, mask, dtype);
   cv.imshow('substResult1', areaToRemove);
 
   console.log("removed background color", substResult1);
@@ -209,20 +210,28 @@ function removeColor(imgReference, color){
 
 function doSketchExtraction(){
 
-  // removeColor(imgSketchExtraction, [65,120,225,225]); //remove blue color of adhesion tape
-  // let extractImg = areaToRemove.clone();
-  // console.log("extractImg: ", extractImg);
+  let src = cv.imread(imgSketchExtraction); //this is creating a cv.Mat()
 
-  let extractImg = cv.imread(imgSketchExtraction);
-  
+  // lime as example color RGB = [173, 255, 47]
+
+  //step 1. remove bgcolor of being printed object; leave only outlines
+  //this should be done only for the sketches after 1st prints
+  let color = [173, 255, 47, 255]; //lime for test. Should be color picked from img?
+  let low = new cv.Mat(src.rows, src.cols, src.type(), [0, 0, 0, 0]);
+  let high = new cv.Mat(src.rows, src.cols, src.type(), color);
+  cv.inRange(src, low, high, areaToRemove);
+  cv.imshow('substResult1', areaToRemove);
+
+  let extractImg = src.clone();
 
   //params to operate subtract
-  let mask = new cv.Mat();
   let bgdModel = new cv.Mat();
   let fgdModel = new cv.Mat();
 
-  //foreground detection
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2RGB, 0);
+  removeColor(imgSketchExtraction, [65,120,225,225]); //try to rmv bgcolor
+
+  //step 2. foreground detection
   cv.grabCut(extractImg, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
 
   for(let i=0; i<extractImg.rows; i++){
