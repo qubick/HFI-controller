@@ -1,25 +1,29 @@
 var capturedImgOjects = [];
 var pausedPrint = false;
+
 var capturedforExtraction = false;
 
 //sketch extrusion type
 var capturedToExtrude = false;
 var capturedToRevolve = false;
+var capturedToTwist = false;
+
+var extrusionCnt = 0;
 
 //common vars for CV
-let mask = new cv.Mat();
-let dst = new cv.Mat(); //subtraction destination
-let dtype = -1;
+var mask = new cv.Mat();
+var dst = new cv.Mat(); //subtraction destination
+var dtype = -1;
 
-let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
+var rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
 const areaThreshold = 100;
 const areaMaxSize = 6000;
 
-let extHeight = 10;
-let scaleFactorToBedSize = 13.6;
+var extHeight = 10;
+var scaleFactorToBedSize = 13.6;
 
 // vars to clear images
-let areaToRemove = new cv.Mat();
+var areaToRemove = new cv.Mat();
 
 // configure
 Webcam.set({
@@ -156,24 +160,34 @@ function captureToExtractSketch(){
 
     // toggle button
 
-    if(clickedBtnID === 'extrudeBtn')
+    if(clickedBtnID === 'extrudeBtn'){
       document.getElementById('extrudeBtn').value = "Extract Image"
-    else if(clickedBtnID === 'revolveBtn')
+    }
+    else if(clickedBtnID === 'revolveBtn'){
       document.getElementById('revolveBtn').value = "Extract Image"
-    else if(clickedBtnID === 'twistBtn')
+    }
+    else if(clickedBtnID === 'twistBtn'){
       document.getElementById('twistBtn').value = "Extract Image"
-
+    }
   }
   else{
 
-    if(clickedBtnID === 'extrudeBtn')
-      document.getElementById('extrudeBtn').value = "Capture to Extrude"
-    else if(clickedBtnID === 'revolveBtn')
-      document.getElementById('revolveBtn').value = "Capture to Revolve"
-    else if(clickedBtnID === 'twistBtn')
-      document.getElementById('twistBtn').value = "Capture to Twist"
+    if(clickedBtnID === 'extrudeBtn'){
+      document.getElementById('extrudeBtn').value = "Capture to Extrude";
+      console.log("current extrusion cycle: ", ++extrusionCnt);
+    }
+    else if(clickedBtnID === 'revolveBtn'){
+      document.getElementById('revolveBtn').value = "Capture to Revolve";
+    }
+    else if(clickedBtnID === 'twistBtn'){
+      document.getElementById('twistBtn').value = "Capture to Twist";
+    }
 
-    doSketchExtraction();
+    if(extrusionCnt === 2)
+      ExtractFirstSketch(); //first extrusion, don't need to remove filament color
+    else
+      ExtractAfterFirstSketch(); //exclude object color printed before
+
   }
   capturedforExtraction = 1 - capturedforExtraction; //toggle
 
@@ -208,7 +222,118 @@ function removeColor(imgReference, color){
   // return areaToRemove;
 }
 
-function doSketchExtraction(){
+function ExtractFirstSketch(){
+
+  let extractImg = cv.imread(imgSketchExtraction);
+
+  //params to operate subtract
+  let bgdModel = new cv.Mat();
+  let fgdModel = new cv.Mat();
+
+  cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2RGB, 0);
+  cv.grabCut(extractImg, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
+
+  for(let i=0; i<extractImg.rows; i++){
+    for(let j=0; j<extractImg.cols; j++){
+      if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
+        extractImg.ucharPtr(i,j)[0] = 255;
+        extractImg.ucharPtr(i,j)[1] = 255;
+        extractImg.ucharPtr(i,j)[2] = 255;
+      }
+    }
+  }
+
+  cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2GRAY, 0);
+  cv.threshold(extractImg, extractImg, 120, 200, cv.THRESH_BINARY);
+  cv.imshow('substResult1', extractImg);
+
+  let dest = cv.Mat.zeros(extractImg.cols, extractImg.rows, cv.CV_8UC3);
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
+  let poly = new cv.MatVector();
+
+  cv.findContours(extractImg, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+  for (let u = 0; u < contours.size(); ++u) {
+    let tmp = new cv.Mat();
+    let cnt = contours.get(u);
+    cv.approxPolyDP(cnt, tmp, 0, true);
+    poly.push_back(tmp);
+
+    cnt.delete(); tmp.delete();
+  }
+
+  for (let i = 0; i < contours.size(); ++i) {
+
+    let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+                          Math.round(Math.random() * 255));
+    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
+    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
+  }
+  cv.imshow('substResult2', dest); //contour extraction result
+
+  for(let j=0; j<contours.size(); j++){
+    let contour = contours.get(j);
+    let area = cv.contourArea(contour, false);
+
+    //post the largest area msg
+    if((area > areaThreshold) && (area < areaMaxSize)){
+
+      //for openJscad
+      var scriptLine = 'var poly = polygon(['
+        , extrudePtrn = ''
+        , line = ''
+        , contourCnt = contour.data32F.length;
+
+      //to center polygon
+      let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
+      translateScript = translateScript.replace(/e-4[0-9]+/g,'');
+
+      // to rotate for revolve
+      let rotateScript = '.rotateZ(90)'
+
+      //do not translate vertices manually
+      for(let k=0; k<contourCnt; k+=2){
+        var x = contour.data32F[k] //- initialPoint.x;
+        var y = contour.data32F[k+1] //- initialPoint.y;
+
+          line = '[' + x + ',' + y + '],\n'
+
+          //for debug purpose -- check if curve is self intersecting
+        //   var polyPos = {
+        //     x: parseFloat(x),
+        //     y: parseFloat(y)
+        //   }
+        //   curveFromCam.push(polyPos);
+        // }
+
+    			line = line.replace(/e-4[0-9]+/g,'');
+          scriptLine += line; //center
+
+      } // EOF for k
+      scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
+
+      if(clickedBtnID === 'extrudeBtn')
+        extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
+      else if(clickedBtnID === 'revolveBtn')
+        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
+      else if(clickedBtnID === 'twistBtn')
+        extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([13.6,13.6,2]);' //twist >> where could twist extrusion interesting?
+
+      //rotate might not useful for linear/twist extrusion; see details for later
+      scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
+
+      var msg = {
+        msg: "writeFile",
+        script: scriptLine
+      };
+
+      channel.postMessage(msg);
+    }
+  } // EOF for j
+}
+
+function ExtractAfterFirstSketch(){
 
   let src = cv.imread(imgSketchExtraction); //this is creating a cv.Mat()
 
@@ -245,7 +370,6 @@ function doSketchExtraction(){
   }
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2GRAY, 0);
   cv.threshold(extractImg, extractImg, 120, 200, cv.THRESH_BINARY);
-  // cv.imshow('substResult1', extractImg); //sketch extraction result
 
   let dest = cv.Mat.zeros(extractImg.cols, extractImg.rows, cv.CV_8UC3);
   let contours = new cv.MatVector();
@@ -324,7 +448,7 @@ function doSketchExtraction(){
       if(clickedBtnID === 'extrudeBtn')
         extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
       else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // imperical scale value
+        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
       else if(clickedBtnID === 'twistBtn')
         extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([13.6,13.6,2]);' //twist >> where could twist extrusion interesting?
 
