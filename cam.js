@@ -183,7 +183,7 @@ function captureToExtractSketch(){
       document.getElementById('twistBtn').value = "Capture to Twist";
     }
 
-    if(extrusionCnt === 2)
+    if(extrusionCnt === 1)
       ExtractFirstSketch(); //first extrusion, don't need to remove filament color
     else
       ExtractAfterFirstSketch(); //exclude object color printed before
@@ -224,6 +224,7 @@ function removeColor(imgReference, color){
 
 function ExtractFirstSketch(){
 
+  console.log("Extract sketch for the first sketch...")
   let extractImg = cv.imread(imgSketchExtraction);
 
   //params to operate subtract
@@ -331,32 +332,23 @@ function ExtractFirstSketch(){
       channel.postMessage(msg);
     }
   } // EOF for j
+
+  fgdModel.delete();
+  bgdModel.delete();
 }
 
 function ExtractAfterFirstSketch(){
 
-  let src = cv.imread(imgSketchExtraction); //this is creating a cv.Mat()
 
-  // lime as example color RGB = [173, 255, 47]
-
-  //step 1. remove bgcolor of being printed object; leave only outlines
-  //this should be done only for the sketches after 1st prints
-  let color = [173, 255, 47, 255]; //lime for test. Should be color picked from img?
-  let low = new cv.Mat(src.rows, src.cols, src.type(), [0, 0, 0, 0]);
-  let high = new cv.Mat(src.rows, src.cols, src.type(), color);
-  cv.inRange(src, low, high, areaToRemove);
-  cv.imshow('substResult1', areaToRemove);
-
-  let extractImg = src.clone();
 
   //params to operate subtract
   let bgdModel = new cv.Mat();
   let fgdModel = new cv.Mat();
 
+  let extractImg = cv.imread(imgSketchExtraction); //read the original img
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2RGB, 0);
-  removeColor(imgSketchExtraction, [65,120,225,225]); //try to rmv bgcolor
 
-  //step 2. foreground detection
+  // step 2. foreground detection
   cv.grabCut(extractImg, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
 
   for(let i=0; i<extractImg.rows; i++){
@@ -368,102 +360,89 @@ function ExtractAfterFirstSketch(){
       }
     }
   }
-  cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2GRAY, 0);
-  cv.threshold(extractImg, extractImg, 120, 200, cv.THRESH_BINARY);
 
-  let dest = cv.Mat.zeros(extractImg.cols, extractImg.rows, cv.CV_8UC3);
+  let src = extractImg.clone(); //this is creating a cv.Mat()
+
+  //step 1. remove bgcolor of being printed object (to detect 2nd level sketches); leave only outlines
+  let color = [173, 255, 47, 255]; //lime for test. Should be color picked from img?
+  let low = new cv.Mat(src.rows, src.cols, src.type(), [0, 0, 0, 0]);
+  let high = new cv.Mat(src.rows, src.cols, src.type(), color);
+  cv.inRange(src, low, high, areaToRemove);
+  cv.imshow('substResult1', areaToRemove);
+
+  // step 3. find contours
+  let dest = cv.Mat.zeros(areaToRemove.cols, areaToRemove.rows, cv.CV_8UC3);
   let contours = new cv.MatVector();
   let hierarchy = new cv.Mat();
-  let poly = new cv.MatVector();
+  // let poly = new cv.MatVector();
 
-  cv.findContours(extractImg, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+  cv.findContours(areaToRemove, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-  for (let u = 0; u < contours.size(); ++u) {
-    let tmp = new cv.Mat();
-    let cnt = contours.get(u);
-    cv.approxPolyDP(cnt, tmp, 0, true);
-    poly.push_back(tmp);
-
-    cnt.delete(); tmp.delete();
-  }
+  // to find polylines (low-fi)
+  // for (let u = 0; u < contours.size(); ++u) {
+  //   let tmp = new cv.Mat();
+  //   let cnt = contours.get(u);
+  //   cv.approxPolyDP(cnt, tmp, 0, true);
+  //   poly.push_back(tmp);
+  //
+  //   cnt.delete(); tmp.delete();
+  // }
 
   for (let i = 0; i < contours.size(); ++i) {
 
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                           Math.round(Math.random() * 255));
-    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
-    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
+    cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
+    // cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
-  for(let j=0; j<contours.size(); j++){
-    let contour = contours.get(j);
-    let area = cv.contourArea(contour, false);
-
-    //post the largest area msg
-    if((area > areaThreshold) && (area < areaMaxSize)){
-
-      //for openscad
-      // var scriptLine = "polygon(points=[";
-
-      //for openJscad
-      var scriptLine = 'var poly = polygon(['
-        , extrudePtrn = ''
-        , line = ''
-        , contourCnt = contour.data32F.length;
-
-      //to center polygon
-      let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
-      translateScript = translateScript.replace(/e-4[0-9]+/g,'');
-
-      // to rotate for revolve
-      let rotateScript = '.rotateZ(90)'
-
-      //do not translate vertices manually
-      for(let k=0; k<contourCnt; k+=2){
-        var x = contour.data32F[k] //- initialPoint.x;
-        var y = contour.data32F[k+1] //- initialPoint.y;
-
-          line = '[' + x + ',' + y + '],\n'
-
-          //for debug purpose -- check if curve is self intersecting
-        //   var polyPos = {
-        //     x: parseFloat(x),
-        //     y: parseFloat(y)
-        //   }
-        //   curveFromCam.push(polyPos);
-        // }
-
-    			line = line.replace(/e-4[0-9]+/g,'');
-          scriptLine += line; //center
-
-      } // EOF for k
-      scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
-
-      //for openscad
-      // scriptLine += ']);' //close script line
-      // scriptLine = 'linear_extrude(height = 10, center = true, convexity = 10, twist = 0) ' + scriptLine;
-
-
-      if(clickedBtnID === 'extrudeBtn')
-        extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
-      else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
-      else if(clickedBtnID === 'twistBtn')
-        extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([13.6,13.6,2]);' //twist >> where could twist extrusion interesting?
-
-
-      //rotate might not useful for linear/twist extrusion; see details for later
-      scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
-
-      var msg = {
-        msg: "writeFile",
-        script: scriptLine
-      };
-
-      channel.postMessage(msg);
-    }
-  } // EOF for j
+  // for(let j=0; j<contours.size(); j++){
+  //   let contour = contours.get(j);
+  //   let area = cv.contourArea(contour, false);
+  //
+  //   //post the largest area msg
+  //   if((area > areaThreshold) && (area < areaMaxSize)){
+  //
+  //     var scriptLine = 'var poly = polygon(['
+  //       , extrudePtrn = ''
+  //       , line = ''
+  //       , contourCnt = contour.data32F.length;
+  //
+  //     //to center polygon
+  //     let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
+  //     translateScript = translateScript.replace(/e-4[0-9]+/g,'');
+  //
+  //     // to rotate for revolve
+  //     let rotateScript = '.rotateZ(90)'
+  //
+  //     //do not translate vertices manually
+  //     for(let k=0; k<contourCnt; k+=2){
+  //       var x = contour.data32F[k] //- initialPoint.x;
+  //       var y = contour.data32F[k+1] //- initialPoint.y;
+  //
+  //         line = '[' + x + ',' + y + '],\n'
+  //
+  //   			line = line.replace(/e-4[0-9]+/g,'');
+  //         scriptLine += line; //center
+  //
+  //     } // EOF for k
+  //     scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
+  //
+  //     if(clickedBtnID === 'extrudeBtn')
+  //       extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
+  //
+  //     //rotate might not useful for linear/twist extrusion; see details for later
+  //     scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
+  //
+  //     var msg = {
+  //       msg: "writeFile",
+  //       script: scriptLine
+  //     };
+  //
+  //     channel.postMessage(msg);
+  //   }
+  // } // EOF for j
 }
 
 function getExtrudeHeight(){
