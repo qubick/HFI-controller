@@ -44,10 +44,15 @@
 				<form>
 					<input type=button value="Pause print" onClick="take_snapshot()" id="snapshotBtn">
 					<input type=button value="ImgProcessing" onClick="doImageProcessing()" id="snapshotBtn">
+					<br/>
+					Set Height:
+					<input type=text id="extrudeHeightInput">
+					<br/>
+					<!-- <input type=button value="Set height" onclick="getExtrudeHeight()" id="submitHeight"> -->
 					<input type=button value="Capture to extrude" onclick="captureToExtractSketch()" id="extrudeBtn">
 					<input type=button value="Capture to revolve" onclick="captureToExtractSketch()" id="revolveBtn">
 					<input type=button value="Capture to twist" onclick="captureToExtractSketch()" id="twistBtn">
-				</form>
+					</form>
 
 				<div id="imgs">
 					<div id="results1"></div>

@@ -10,8 +10,9 @@ var capturedToRevolve = false;
 let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
 const areaThreshold = 100;
 const areaMaxSize = 6000;
-let initialPoint = {};
-let scaleFactorToBedSize = 10;
+
+let extHeight = 1;
+let scaleFactorToBedSize = 13.6;
 
 // configure
 Webcam.set({
@@ -126,6 +127,8 @@ function doImageProcessing(){
 }
 
 function captureToExtractSketch(){
+  getExtrudeHeight();
+
   let clickedBtnID = window.event.target.id;
 
   if(!capturedforExtraction){
@@ -207,8 +210,8 @@ function doSketchExtraction(){
 
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                           Math.round(Math.random() * 255));
-    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
-    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0);
+    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
+    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
@@ -255,7 +258,6 @@ function doSketchExtraction(){
 
       } // EOF for k
       scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
-      // scriptLine = 'var poly = polygon([' + scriptLine + ']);'//.scale([' + scaleFactorToBedSize + ','+ scaleFactorToBedSize + ',1]) \n'
 
       //for openscad
       // scriptLine += ']);' //close script line
@@ -263,11 +265,11 @@ function doSketchExtraction(){
 
 
       if(clickedBtnID === 'extrudeBtn')
-        extrudePtrn = '\n return linear_extrude({height:5}, poly).scale([10,10,2]);' //,;
+        extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
       else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // imperical scale value 
+        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // imperical scale value
       else if(clickedBtnID === 'twistBtn')
-        extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([50,50,2]);' //test twist
+        extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([13.6,13.6,2]);' //twist >> where could twist extrusion interesting?
 
 
       //rotate might not useful for linear/twist extrusion; see details for later
@@ -281,4 +283,9 @@ function doSketchExtraction(){
       channel.postMessage(msg);
     }
   } // EOF for j
+}
+
+function getExtrudeHeight(){
+  extHeight = document.getElementById('extrudeHeightInput').value;
+  console.log("extrusion height: ", extHeight)
 }
