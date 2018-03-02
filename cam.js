@@ -11,8 +11,11 @@ let rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the 
 const areaThreshold = 100;
 const areaMaxSize = 6000;
 
-let extHeight = 1;
+let extHeight = 10;
 let scaleFactorToBedSize = 13.6;
+
+// vars to clear images
+let areaToRemove = new cv.Mat();
 
 // configure
 Webcam.set({
@@ -45,6 +48,7 @@ function take_snapshot() {
     divTag = "results2";
 
     msgCommand["msg"] = "printing"
+
   } //EO-if
 
   channel.postMessage(msgCommand);
@@ -55,10 +59,17 @@ function take_snapshot() {
     document.getElementById(divTag).innerHTML =
       'Captured image:' +
       '<img src="'+data_uri+'" id="'+imgTag+'"/>';
+
   } );
 }
 
-function doImageProcessing(){
+
+// detect foreground of 1st & 2nd img
+// disply 1st's foreground (being printed object as insertion background)
+// disply inserted object's contour line by subtracting 2nd from 1st
+function foregroundDetection(){
+
+  console.log("foreground detection...")
 
     if(document.getElementById('firstImg') && document.getElementById('secondImg')){
       let imgFirst = cv.imread(firstImg);
@@ -98,6 +109,9 @@ function doImageProcessing(){
         }
       }
 
+      // show currently printing layer area
+      cv.imshow('substResult1', imgFirst);
+
       //thresholding of the foreground detected imgs to find difference
       cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
       cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2GRAY, 0);
@@ -105,10 +119,9 @@ function doImageProcessing(){
       cv.threshold(imgSecnd, imgSecnd, 100, 200, cv.THRESH_BINARY);
 
       cv.subtract(imgSecnd, imgFirst, dst, mask, dtype);
-      cv.imshow('substResult1', dst);
 
       // find contour for extracted forground images
-      let newDst = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
+      let dstForeground = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
       let contours = new cv.MatVector();
       let hierarchy = new cv.Mat();
 
@@ -117,14 +130,15 @@ function doImageProcessing(){
         //random colors
         let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                               Math.round(Math.random() * 255));
-        cv.drawContours(newDst, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+        cv.drawContours(dstForeground, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
       }
 
-      cv.imshow('substResult2', newDst);
+      cv.imshow('substResult2', dstForeground);
       dst.delete();
-      newDst.delete();
+      dstForeground.delete();
     }
-}
+} //EOF func foregroundDetection (foreground detection & thresholding)
+
 
 function captureToExtractSketch(){
   getExtrudeHeight();
@@ -165,9 +179,42 @@ function captureToExtractSketch(){
 
 }
 
+function removeColor(imgReference, color){
+  let red = [], green = [], blue = [65,120,225,225]
+    , lime = [173, 255, 47, 255];
+
+  color = blue;
+
+  console.log("img reference: ", imgReference);
+  // imgReference doesn't matter now
+  let src = cv.imread(imgSketchExtraction); //this is creating a cv.Mat()
+  // let areaToRemove = new cv.Mat();
+
+  // lime as example color RGB = [173, 255, 47]
+  let low = new cv.Mat(src.rows, src.cols, src.type(), [0, 0, 0, 0]);
+  let high = new cv.Mat(src.rows, src.cols, src.type(), color);
+  cv.inRange(src, low, high, areaToRemove);
+  cv.imshow('substResult1', areaToRemove);
+
+  console.log("removed background color", substResult1);
+
+  //clear stack
+  src.delete();
+  // areaToRemove.delete();
+  low.delete();
+  high.delete();
+
+  // return areaToRemove;
+}
+
 function doSketchExtraction(){
 
+  // removeColor(imgSketchExtraction, [65,120,225,225]); //remove blue color of adhesion tape
+  // let extractImg = areaToRemove.clone();
+  // console.log("extractImg: ", extractImg);
+
   let extractImg = cv.imread(imgSketchExtraction);
+  
 
   //params to operate subtract
   let mask = new cv.Mat();
@@ -177,6 +224,7 @@ function doSketchExtraction(){
   //foreground detection
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2RGB, 0);
   cv.grabCut(extractImg, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
+
   for(let i=0; i<extractImg.rows; i++){
     for(let j=0; j<extractImg.cols; j++){
       if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
@@ -188,7 +236,7 @@ function doSketchExtraction(){
   }
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2GRAY, 0);
   cv.threshold(extractImg, extractImg, 120, 200, cv.THRESH_BINARY);
-  cv.imshow('substResult1', extractImg); //sketch extraction result
+  // cv.imshow('substResult1', extractImg); //sketch extraction result
 
   let dest = cv.Mat.zeros(extractImg.cols, extractImg.rows, cv.CV_8UC3);
   let contours = new cv.MatVector();
