@@ -265,7 +265,7 @@ function doSketchExtraction(){
       if(clickedBtnID === 'extrudeBtn')
         extrudePtrn = '\n return linear_extrude({height:5}, poly).scale([10,10,2]);' //,;
       else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = '\n return rotate_extrude(poly);' //, {fn: 100})';
+        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // imperical scale value 
       else if(clickedBtnID === 'twistBtn')
         extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([50,50,2]);' //test twist
 
