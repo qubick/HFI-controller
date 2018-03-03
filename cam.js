@@ -183,43 +183,14 @@ function captureToExtractSketch(){
       document.getElementById('twistBtn').value = "Capture to Twist";
     }
 
-    if(extrusionCnt === 1)
+    // if(extrusionCnt === 1)
       ExtractFirstSketch(); //first extrusion, don't need to remove filament color
-    else
-      ExtractAfterFirstSketch(); //exclude object color printed before
+    // else
+    //   ExtractAfterFirstSketch(); //exclude object color printed before
 
   }
   capturedforExtraction = 1 - capturedforExtraction; //toggle
 
-}
-
-function removeColor(imgReference, color){
-  let red = [], green = [], blue = [65,120,225,225]
-    , lime = [173, 255, 47, 255];
-
-  color = lime;
-
-  let src = cv.imread(imgSketchExtraction); //this is creating a cv.Mat()
-  // let areaToRemove = new cv.Mat();
-
-  // lime as example color RGB = [173, 255, 47]
-  let low = new cv.Mat(src.rows, src.cols, src.type(), [0, 0, 0, 0]);
-  let high = new cv.Mat(src.rows, src.cols, src.type(), color);
-  cv.inRange(src, low, high, areaToRemove);
-
-
-  // cv.subtract(src, areaToRemove, dst, mask, dtype);
-  cv.imshow('substResult1', areaToRemove);
-
-  console.log("removed background color", substResult1);
-
-  //clear stack
-  src.delete();
-  // areaToRemove.delete();
-  low.delete();
-  high.delete();
-
-  // return areaToRemove;
 }
 
 function ExtractFirstSketch(){
@@ -273,6 +244,12 @@ function ExtractFirstSketch(){
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
+//****************>>>>>>>>>>>>>>>>>>>
+// move this to the top maybe?
+let polyArrayscript = '';
+let areaLarge = areaThreshold
+  , areaSmall = areaMaxSize;
+
   for(let j=0; j<contours.size(); j++){
     let contour = contours.get(j);
     let area = cv.contourArea(contour, false);
@@ -290,7 +267,7 @@ function ExtractFirstSketch(){
       let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
       translateScript = translateScript.replace(/e-4[0-9]+/g,'');
 
-      // to rotate for revolve
+      // to rotate for revolve from center, x-axis
       let rotateScript = '.rotateZ(90)'
 
       //do not translate vertices manually
@@ -299,30 +276,48 @@ function ExtractFirstSketch(){
         var y = contour.data32F[k+1] //- initialPoint.y;
 
           line = '[' + x + ',' + y + '],\n'
-
-          //for debug purpose -- check if curve is self intersecting
-        //   var polyPos = {
-        //     x: parseFloat(x),
-        //     y: parseFloat(y)
-        //   }
-        //   curveFromCam.push(polyPos);
-        // }
-
-    			line = line.replace(/e-4[0-9]+/g,'');
+          line = line.replace(/e-4[0-9]+/g,'');
           scriptLine += line; //center
 
       } // EOF for k
       scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
 
-      if(clickedBtnID === 'extrudeBtn')
-        extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
-      else if(clickedBtnID === 'revolveBtn')
-        extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
-      else if(clickedBtnID === 'twistBtn')
-        extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([13.6,13.6,2]);' //twist >> where could twist extrusion interesting?
 
-      //rotate might not useful for linear/twist extrusion; see details for later
-      scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
+      if(extrusionCnt === 1) { //1st extrusion: simple extrusion of the largest area
+
+        if(clickedBtnID === 'extrudeBtn'){
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
+        }
+        else if(clickedBtnID === 'revolveBtn'){
+          extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
+        }
+        else if(clickedBtnID === 'twistBtn'){
+          extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([13.6,13.6,2]);' //twist >> where could twist extrusion interesting?
+        }
+        else {
+          //default;
+        }
+        //rotate might not useful for linear/twist extrusion; see details for later
+        scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
+      }
+      
+      else if (extrusionCnt > 1){ //extrude excluding hole
+
+        if(area > areaLarge)
+          var poly1 = scriptLine.replace(/poly/,'poly1') + '; \n';
+        else if(area < areaSmall)
+          var poly2 = scriptLine.replace(/poly/, 'poly2') + '; \n';
+
+
+        let polyExtrude1 = "var a = linear_extrude({height:5}, poly1); \n"
+        let polyExtrude2 = "var b = linear_extrude({height:6}, poly2); \n"
+        scriptLine = 'function main() { \n'
+                      + poly1       // var poly1 = polygon([]);
+                      + poly2       // var poly2 = polygone([]);
+                      + polyExtrude1// var a = linear_extrude(poly1);
+                      + polyExtrude2// var b = linear_extrude(poly2);
+                      + '\n return subtract(a,b); }'
+      }
 
       var msg = {
         msg: "writeFile",
@@ -339,16 +334,15 @@ function ExtractFirstSketch(){
 
 function ExtractAfterFirstSketch(){
 
-
+  let largeArea, smallArea;
 
   //params to operate subtract
   let bgdModel = new cv.Mat();
   let fgdModel = new cv.Mat();
 
+  // step 1. foreground detection
   let extractImg = cv.imread(imgSketchExtraction); //read the original img
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2RGB, 0);
-
-  // step 2. foreground detection
   cv.grabCut(extractImg, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
 
   for(let i=0; i<extractImg.rows; i++){
@@ -363,13 +357,14 @@ function ExtractAfterFirstSketch(){
 
   let src = extractImg.clone(); //this is creating a cv.Mat()
 
-  //step 1. remove bgcolor of being printed object (to detect 2nd level sketches); leave only outlines
+  //step 2. remove bgcolor of being printed object (to detect 2nd level sketches); leave only outlines
   let color = [173, 255, 47, 255]; //lime for test. Should be color picked from img?
   let low = new cv.Mat(src.rows, src.cols, src.type(), [0, 0, 0, 0]);
   let high = new cv.Mat(src.rows, src.cols, src.type(), color);
   cv.inRange(src, low, high, areaToRemove);
   cv.imshow('substResult1', areaToRemove);
 
+  //>>>>>>>> step 2-2. skipped subtracting images. See back if needed
   // step 3. find contours
   let dest = cv.Mat.zeros(areaToRemove.cols, areaToRemove.rows, cv.CV_8UC3);
   let contours = new cv.MatVector();
@@ -389,7 +384,6 @@ function ExtractAfterFirstSketch(){
   // }
 
   for (let i = 0; i < contours.size(); ++i) {
-
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                           Math.round(Math.random() * 255));
     cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
@@ -397,37 +391,37 @@ function ExtractAfterFirstSketch(){
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
-  // for(let j=0; j<contours.size(); j++){
-  //   let contour = contours.get(j);
-  //   let area = cv.contourArea(contour, false);
+  for(let j=0; j<contours.size(); j++){
+    let contour = contours.get(j);
+    let area = cv.contourArea(contour, false);
+
+    // if((area > areaThreshold) && (area < areaMaxSize)){
+
+      console.log("detected area: ", area);
   //
-  //   //post the largest area msg
-  //   if((area > areaThreshold) && (area < areaMaxSize)){
-  //
-  //     var scriptLine = 'var poly = polygon(['
-  //       , extrudePtrn = ''
-  //       , line = ''
-  //       , contourCnt = contour.data32F.length;
+      var scriptLine = 'var poly = polygon(['
+        , extrudePtrn = ''
+        , line = ''
+        , contourCnt = contour.data32F.length;
   //
   //     //to center polygon
-  //     let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
-  //     translateScript = translateScript.replace(/e-4[0-9]+/g,'');
+      let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
+      translateScript = translateScript.replace(/e-4[0-9]+/g,'');
   //
-  //     // to rotate for revolve
-  //     let rotateScript = '.rotateZ(90)'
-  //
-  //     //do not translate vertices manually
-  //     for(let k=0; k<contourCnt; k+=2){
-  //       var x = contour.data32F[k] //- initialPoint.x;
-  //       var y = contour.data32F[k+1] //- initialPoint.y;
-  //
-  //         line = '[' + x + ',' + y + '],\n'
-  //
-  //   			line = line.replace(/e-4[0-9]+/g,'');
-  //         scriptLine += line; //center
-  //
-  //     } // EOF for k
-  //     scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
+      for(let k=0; k<contourCnt; k+=2){
+        var x = contour.data32F[k] //- initialPoint.x;
+        var y = contour.data32F[k+1] //- initialPoint.y;
+
+          line = '[' + x + ',' + y + '],\n'
+    			line = line.replace(/e-4[0-9]+/g,'');
+          scriptLine += line; //center
+
+      } // EOF for k
+      scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
+    // } // EOF-IF (area comparison)
+  } // EOF for j
+
+  //create a polygon with all outlines
   //
   //     if(clickedBtnID === 'extrudeBtn')
   //       extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
@@ -441,8 +435,6 @@ function ExtractAfterFirstSketch(){
   //     };
   //
   //     channel.postMessage(msg);
-  //   }
-  // } // EOF for j
 }
 
 function getExtrudeHeight(){
