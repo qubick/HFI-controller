@@ -225,21 +225,21 @@ function ExtractFirstSketch(){
 
   cv.findContours(extractImg, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-  for (let u = 0; u < contours.size(); ++u) {
-    let tmp = new cv.Mat();
-    let cnt = contours.get(u);
-    cv.approxPolyDP(cnt, tmp, 0, true);
-    poly.push_back(tmp);
-
-    cnt.delete(); tmp.delete();
-  }
+  // for (let u = 0; u < contours.size(); ++u) {
+  //   let tmp = new cv.Mat();
+  //   let cnt = contours.get(u);
+  //   cv.approxPolyDP(cnt, tmp, 0, true);
+  //   poly.push_back(tmp);
+  //
+  //   cnt.delete(); tmp.delete();
+  // }
 
   for (let i = 0; i < contours.size(); ++i) {
 
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                           Math.round(Math.random() * 255));
-    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
-    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
+    cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
+    // cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
@@ -271,13 +271,13 @@ function ExtractFirstSketch(){
         scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
 
         if(clickedBtnID === 'extrudeBtn'){
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
         }
         else if(clickedBtnID === 'revolveBtn'){
           extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
         }
         else if(clickedBtnID === 'twistBtn'){
-          extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([13.6,13.6,2]);' //twist >> where could twist extrusion interesting?
+          extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
         }
         else {
           //default;
@@ -348,25 +348,29 @@ function ExtractFirstSketch(){
     if(largestPolyIdx > -1){
       polygonHoles.splice(largestPolyIdx, 1); //remove the largest (single value);
     }
-    var len = polygonHoles.length;
-    console.log("# of polygons to create holes: ", len);
+    // var len = polygonHoles.length;
+    // console.log("# of polygons to create holes: ", len);
+    polygonHoles.pop(); //remove the last element, last is always the largest area?
 
     polygonHoles.forEach((holes, i) =>{
       var line = [holes.slice(0,8), i, holes.slice(8)].join('');
-      polygonHoleScripts += line + ';\n';
+      polygonHoleScripts += line + '; polygons.push(poly' + i + ')\n';
     });
 
-    var extrudeScript1 = '   var a = linear_extrude({height:5}, poly);\n';
-    var extrudeScript2 = '   var integratedHoles = linear_extrude({height:1}, poly0);\n'
-        + '   for(var i=1; i<' + len + '; i++){\n'
-        + '      var newPoly = linear_extrude({height:6}, poly[i]);\n'
-        + '      integratedHoles = union(integratedHoles, newPoly); \n }'
+    var height = document.getElementById('extrudeHeightInput').value;
+    var extrudeScript1 = '   var a = linear_extrude({height:' + height + '}, poly);\n';
+    var extrudeScript2 = '   var integratedHoles = linear_extrude({height: ' + (height+1) +' }, poly0);\n'
+        + '   polygons.forEach((polys) => { \n'
+        + '      var newPoly = linear_extrude({height:6}, polys);\n'
+        + '      integratedHoles = union(integratedHoles, newPoly); \n'
+        + '   });'
 
     scriptLine = 'function main(){ \n'
+                +'   var polygons = [];\n'
                 + largestPolyScript + ';\n'  //largest area for linear extrusion
                 + polygonHoleScripts  //smaller areas for creating holes
                 + extrudeScript1  + extrudeScript2
-                + '\n return subtract(a, integratedHoles);}'
+                + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
   } // EOF extrusionCnt > 1
 
   var msg = {
