@@ -16,8 +16,8 @@ var dst = new cv.Mat(); //subtraction destination
 var dtype = -1;
 
 var rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
-const areaThreshold = 100;
-const areaMaxSize = 6000;
+const areaLowerBound = 30;
+const areaUpperBound = 6000;
 
 var extHeight = 10;
 var scaleFactorToBedSize = 13.6;
@@ -195,7 +195,6 @@ function captureToExtractSketch(){
 
 function ExtractFirstSketch(){
 
-  console.log("Extract sketch for the first sketch...")
   let extractImg = cv.imread(imgSketchExtraction);
 
   //params to operate subtract
@@ -244,46 +243,32 @@ function ExtractFirstSketch(){
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
-//****************>>>>>>>>>>>>>>>>>>>
-// move this to the top maybe?
-let polyArrayscript = '';
-let areaLarge = areaThreshold
-  , areaSmall = areaMaxSize;
+  if(extrusionCnt === 1){
+    for(let j=0; j<contours.size(); j++){
+      let contour = contours.get(j);
+      let area = cv.contourArea(contour, false);
 
-  for(let j=0; j<contours.size(); j++){
-    let contour = contours.get(j);
-    let area = cv.contourArea(contour, false);
+      //post the largest area msg
+      if((area > areaLowerBound) && (area < areaUpperBound)){
+        var scriptLine = 'var poly = polygon(['
+          , extrudePtrn = ''
+          , line = ''
+          , contourCnt = contour.data32F.length;
 
-    //post the largest area msg
-    if((area > areaThreshold) && (area < areaMaxSize)){
+        //to center polygon
+        let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
+        translateScript = translateScript.replace(/e-4[0-9]+/g,'');
+        let rotateScript = '.rotateZ(90)' // to rotate for revolve from center, x-axis
 
-      //for openJscad
-      var scriptLine = 'var poly = polygon(['
-        , extrudePtrn = ''
-        , line = ''
-        , contourCnt = contour.data32F.length;
-
-      //to center polygon
-      let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
-      translateScript = translateScript.replace(/e-4[0-9]+/g,'');
-
-      // to rotate for revolve from center, x-axis
-      let rotateScript = '.rotateZ(90)'
-
-      //do not translate vertices manually
-      for(let k=0; k<contourCnt; k+=2){
-        var x = contour.data32F[k] //- initialPoint.x;
-        var y = contour.data32F[k+1] //- initialPoint.y;
+        for(let k=0; k<contourCnt; k+=2){
+          var x = contour.data32F[k] //- initialPoint.x;
+          var y = contour.data32F[k+1] //- initialPoint.y;
 
           line = '[' + x + ',' + y + '],\n'
           line = line.replace(/e-4[0-9]+/g,'');
           scriptLine += line; //center
-
-      } // EOF for k
-      scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
-
-
-      if(extrusionCnt === 1) { //1st extrusion: simple extrusion of the largest area
+        } // EOF for k
+        scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
 
         if(clickedBtnID === 'extrudeBtn'){
           extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([13.6,13.6,1]);'
@@ -299,34 +284,97 @@ let areaLarge = areaThreshold
         }
         //rotate might not useful for linear/twist extrusion; see details for later
         scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
-      }
-      
-      else if (extrusionCnt > 1){ //extrude excluding hole
+      } // EOF area size checking
+    } //EOF checking all contour lines found
+  }
+  else if (extrusionCnt > 1){ //extrude excluding hole
+  //****************************************************
+  // openjscad sample
+  // var poly1 = polygon([[0,0],[1,0],[1,1]])
+  //        ,poly2 = polygon([[1,1],[2,1],[2,2]])
+  //        ,poly3 = polygon([[2,2],[3,2],[3,3]])
+  //        ,poly4 = polygon([[3,3],[4,3],[4,4]]);
+  //
+  //     poly.push(poly1, poly2, poly3, poly4);
+  //     var finalShape = linear_extrude({height:1}, poly1)
+  //
+  //     for(var i=0; i<poly.length-1; i++){
+  //         var aa = linear_extrude({height:1}, poly[i+1]);
+  //         finalShape = union(finalShape, aa);
+  //     }
+  //
+  //     return finalShape;
+  //****************************************************
+    var largestPolyIdx = 0
+      , largestPolyScript = ''
+      , areaMaxSize = areaLowerBound;
+    var polygonHoles = [] //array of var poly = polygon([]) scripts
+      , polygonHoleScripts = '' //integrated script to extrude
 
-        if(area > areaLarge)
-          var poly1 = scriptLine.replace(/poly/,'poly1') + '; \n';
-        else if(area < areaSmall)
-          var poly2 = scriptLine.replace(/poly/, 'poly2') + '; \n';
+    for(let j=0; j<contours.size(); j++){
+      let contour = contours.get(j);
+      let area = cv.contourArea(contour, false);
 
+      //post the largest area msg
+      if((area > areaLowerBound) && (area < areaUpperBound)){
+        var scriptLine = 'var poly = polygon(['
+          , contourCnt = contour.data32F.length;
 
-        let polyExtrude1 = "var a = linear_extrude({height:5}, poly1); \n"
-        let polyExtrude2 = "var b = linear_extrude({height:6}, poly2); \n"
-        scriptLine = 'function main() { \n'
-                      + poly1       // var poly1 = polygon([]);
-                      + poly2       // var poly2 = polygone([]);
-                      + polyExtrude1// var a = linear_extrude(poly1);
-                      + polyExtrude2// var b = linear_extrude(poly2);
-                      + '\n return subtract(a,b); }'
-      }
+        //to center polygon
+        let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
+        translateScript = translateScript.replace(/e-4[0-9]+/g,'');
 
-      var msg = {
-        msg: "writeFile",
-        script: scriptLine
-      };
+        for(let k=0; k<contourCnt; k+=2){
+          var x = contour.data32F[k] //- initialPoint.x;
+          var y = contour.data32F[k+1] //- initialPoint.y;
 
-      channel.postMessage(msg);
+          var line = '[' + x + ',' + y + '],\n' //have to renew everytime
+          line = line.replace(/e-4[0-9]+/g,'');
+          scriptLine += line; //center
+        } // EOF for k
+        scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
+        polygonHoles.push(scriptLine);
+
+        if(area > areaMaxSize){
+          largestPolyIdx = j;
+          areaMaxSize = area;
+          largestPolyScript = scriptLine;
+        }
+      } // EOF areaThreshold checking
+    } // EOF for j, finished going through all contourlines detected
+
+    // console.log("index of the largest area: ", largestPolyIdx);
+    // console.log("# of polygons: ", polygonHolesScript.length);
+    if(largestPolyIdx > -1){
+      polygonHoles.splice(largestPolyIdx, 1); //remove the largest (single value);
     }
-  } // EOF for j
+    var len = polygonHoles.length;
+    console.log("# of polygons to create holes: ", len);
+
+    polygonHoles.forEach((holes, i) =>{
+      var line = [holes.slice(0,8), i, holes.slice(8)].join('');
+      polygonHoleScripts += line + ';\n';
+    });
+
+    var extrudeScript1 = '   var a = linear_extrude({height:5}, poly);\n';
+    var extrudeScript2 = '   var integratedHoles = linear_extrude({height:1}, poly0);\n'
+        + '   for(var i=1; i<' + len + '; i++){\n'
+        + '      var newPoly = linear_extrude({height:6}, poly[i]);\n'
+        + '      integratedHoles = union(integratedHoles, newPoly); \n }'
+
+    scriptLine = 'function main(){ \n'
+                + largestPolyScript + ';\n'  //largest area for linear extrusion
+                + polygonHoleScripts  //smaller areas for creating holes
+                + extrudeScript1  + extrudeScript2
+                + '\n return subtract(a, integratedHoles);}'
+  } // EOF extrusionCnt > 1
+
+  var msg = {
+    msg: "writeFile",
+    script: scriptLine
+  };
+
+  channel.postMessage(msg);
 
   fgdModel.delete();
   bgdModel.delete();
