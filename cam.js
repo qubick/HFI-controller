@@ -62,19 +62,17 @@ function take_snapshot() {
   channel.postMessage(msgCommand);
 
   Webcam.snap( (data_uri) => {
-
     capturedImgOjects.push(data_uri);
     document.getElementById(divTag).innerHTML =
       'Captured image:' +
       '<img src="'+data_uri+'" id="'+imgTag+'"/>';
-
   } );
 }
 
 
-// detect foreground of 1st & 2nd img
-// disply 1st's foreground (being printed object as insertion background)
-// disply inserted object's contour line by subtracting 2nd from 1st
+// step1. detect foreground of 1st & 2nd img
+// step2. disply 1st's foreground (being printed object as insertion background)
+// step3. disply inserted object's contour line by subtracting 2nd from 1st
 function foregroundDetection(){
 
   console.log("foreground detection...")
@@ -163,6 +161,9 @@ function captureToExtractSketch(){
     if(clickedBtnID === 'extrudeBtn'){
       document.getElementById('extrudeBtn').value = "Extract Image"
     }
+    else if(clickedBtnID === 'scaleBtn'){
+      document.getElementById('scaleBtn').value = "Extract Image"
+    }
     else if(clickedBtnID === 'revolveBtn'){
       document.getElementById('revolveBtn').value = "Extract Image"
     }
@@ -175,6 +176,9 @@ function captureToExtractSketch(){
     if(clickedBtnID === 'extrudeBtn'){
       document.getElementById('extrudeBtn').value = "Capture to Extrude";
     }
+    else if(clickedBtnID === 'scaleBtn'){
+      document.getElementById('scaleBtn').value = "Capture to Scale"
+    }
     else if(clickedBtnID === 'revolveBtn'){
       document.getElementById('revolveBtn').value = "Capture to Revolve";
     }
@@ -182,10 +186,7 @@ function captureToExtractSketch(){
       document.getElementById('twistBtn').value = "Capture to Twist";
     }
 
-    // if(extrusionCnt === 1)
-      ExtractSketchContextBased(); //first extrusion, don't need to remove filament color
-    // else
-    //   ExtractAfterFirstSketch(); //exclude object color printed before
+    ExtractSketchContextBased(); //first extrusion, don't need to remove filament color
 
   }
   capturedforExtraction = 1 - capturedforExtraction; //toggle
@@ -229,21 +230,21 @@ function ExtractSketchContextBased(){
 
   cv.findContours(extractImg, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-  for (let u = 0; u < contours.size(); ++u) {
-    let tmp = new cv.Mat();
-    let cnt = contours.get(u);
-    cv.approxPolyDP(cnt, tmp, 0, true);
-    poly.push_back(tmp);
-
-    cnt.delete(); tmp.delete();
-  }
+  // for (let u = 0; u < contours.size(); ++u) {
+  //   let tmp = new cv.Mat();
+  //   let cnt = contours.get(u);
+  //   cv.approxPolyDP(cnt, tmp, 0, true);
+  //   poly.push_back(tmp);
+  //
+  //   cnt.delete(); tmp.delete();
+  // }
 
   for (let i = 0; i < contours.size(); ++i) {
 
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                           Math.round(Math.random() * 255));
-    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
-    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
+    cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
+    // cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
@@ -261,7 +262,7 @@ function ExtractSketchContextBased(){
           , line = ''
           , contourCnt = contour.data32F.length;
 
-        //to center polygon *********>>>>> this is not centering, translate the starting point to center
+        //to center polygon
         // let initPt = {x: -1*contour.data32F[0], y: contour.data32F[1]} //first, find the offset of starting pts
         // let circle = cv.minEnclosingCircle(contour);
         //
@@ -292,13 +293,17 @@ function ExtractSketchContextBased(){
           extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
           scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
         }
+        else if(clickedBtnID === 'scaleBtn'){
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
+        }
         else if(clickedBtnID === 'revolveBtn'){
           extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
           scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
         }
         else if(clickedBtnID === 'twistBtn'){
           console.log("extrude with twist")
-          extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
           scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
         }
         else {
@@ -364,19 +369,28 @@ function ExtractSketchContextBased(){
     });
 
     var height = document.getElementById('extrudeHeightInput').value;
-    var extrudeScript1 = '   var a = linear_extrude({height:' + height + '}, poly);\n';
-    var extrudeScript2 = '   var integratedHoles = linear_extrude({height: ' + (height+1) +' }, poly0);\n'
-        + '   polygons.forEach((polys) => { \n'
-        + '      var newPoly = linear_extrude({height:6}, polys);\n'
-        + '      integratedHoles = union(integratedHoles, newPoly); \n'
-        + '   });'
 
+    //***************************** this is to create holes; *****************************//
+    // var extrudeScript1 = '   var a = linear_extrude({height:' + height + '}, poly);\n';
+    // var extrudeScript2 = '   var integratedHoles = linear_extrude({height: ' + (height+1) +' }, poly0);\n'
+    //     + '   polygons.forEach((polys) => { \n'
+    //     + '      var newPoly = linear_extrude({height:6}, polys);\n'
+    //     + '      integratedHoles = union(integratedHoles, newPoly); \n'
+    //     + '   });'
+    //
+    // scriptLine = 'function main(){ \n'
+    //             +'   var polygons = [];\n'
+    //             + largestPolyScript + ';\n'  //largest area for linear extrusion
+    //             + polygonHoleScripts  //smaller areas for creating holes
+    //             + extrudeScript1  + extrudeScript2
+    //             + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
+    //*************************************************************************************//
+
+    scriptLine = scripts.replace('polygon(', '').substring(0, scriptLine.length - 1);
     scriptLine = 'function main(){ \n'
-                +'   var polygons = [];\n'
-                + largestPolyScript + ';\n'  //largest area for linear extrusion
-                + polygonHoleScripts  //smaller areas for creating holes
-                + extrudeScript1  + extrudeScript2
-                + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
+                  + 'rectangular_extrude(poly,  {w: 0.1, h: 3, closed: true});'
+                  + '}' //rectangular_extrude along the line
+
   } // EOF extrusionCnt > 1
 
   var msg = {
