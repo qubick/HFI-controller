@@ -261,9 +261,21 @@ function ExtractSketchContextBased(){
           , line = ''
           , contourCnt = contour.data32F.length;
 
-        //to center polygon
-        let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
-        translateScript = translateScript.replace(/e-4[0-9]+/g,'');
+        //to center polygon *********>>>>> this is not centering, translate the starting point to center
+        // let initPt = {x: -1*contour.data32F[0], y: contour.data32F[1]} //first, find the offset of starting pts
+        // let circle = cv.minEnclosingCircle(contour);
+        //
+        // console.log("Check the original pts: ", initPt);
+        // console.log("Check the center of minimum enclosing circle: ", circle.center);
+        //
+        // let offsetX = ( -1*contour.data32F[0] ) + ( -1*circle.center.x );
+        // let offsetY = ( contour.data32F[1] ) + ( -1*circle.center.y );
+        // let translateScript = '.translate([' + offsetX + ',' + -1*circle.center.y + ',0])'
+        // translateScript = translateScript.replace(/e-4[0-9]+/g,''); //getting rid of excessive decimals
+        //
+        // cv.circle(extractImg, circle.center, circle.radius, cv.Scalar(255, 0, 0));
+
+        let translateScript = '.center()'
         let rotateScript = '.rotateZ(90)' // to rotate for revolve from center, x-axis
 
         for(let k=0; k<contourCnt; k+=2){
