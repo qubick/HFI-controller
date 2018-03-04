@@ -64,8 +64,8 @@ function take_snapshot() {
   Webcam.snap( (data_uri) => {
     capturedImgOjects.push(data_uri);
     document.getElementById(divTag).innerHTML =
-      'Captured image:' +
-      '<img src="'+data_uri+'" id="'+imgTag+'"/>';
+    'Captured image:' +
+    '<img src="'+data_uri+'" id="'+imgTag+'"/>';
   } );
 }
 
@@ -77,68 +77,68 @@ function foregroundDetection(){
 
   console.log("foreground detection...")
 
-    if(document.getElementById('firstImg') && document.getElementById('secondImg')){
-      let imgFirst = cv.imread(firstImg);
-      let imgSecnd = cv.imread(secondImg);
+  if(document.getElementById('firstImg') && document.getElementById('secondImg')){
+    let imgFirst = cv.imread(firstImg);
+    let imgSecnd = cv.imread(secondImg);
 
-      //grabCut to detect foreground
-      cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2RGB, 0);
-      cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2RGB, 0);
-      let bgdModel = new cv.Mat();
-      let fgdModel = new cv.Mat();
-      cv.grabCut(imgFirst, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
-      cv.grabCut(imgSecnd, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
+    //grabCut to detect foreground
+    cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2RGB, 0);
+    cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2RGB, 0);
+    let bgdModel = new cv.Mat();
+    let fgdModel = new cv.Mat();
+    cv.grabCut(imgFirst, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
+    cv.grabCut(imgSecnd, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
 
-      //draw foreground for img1
-      for(let i=0; i<imgFirst.rows; i++){
-        for(let j=0; j<imgFirst.cols; j++){
-          if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
-            imgFirst.ucharPtr(i,j)[0] = 255;
-            imgFirst.ucharPtr(i,j)[1] = 255;
-            imgFirst.ucharPtr(i,j)[2] = 255;
-          }
+    //draw foreground for img1
+    for(let i=0; i<imgFirst.rows; i++){
+      for(let j=0; j<imgFirst.cols; j++){
+        if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
+          imgFirst.ucharPtr(i,j)[0] = 255;
+          imgFirst.ucharPtr(i,j)[1] = 255;
+          imgFirst.ucharPtr(i,j)[2] = 255;
         }
       }
-
-      //draw foreground for img2
-      for(let i=0; i<imgSecnd.rows; i++){
-        for(let j=0; j<imgSecnd.cols; j++){
-          if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
-            imgSecnd.ucharPtr(i,j)[0] = 255;
-            imgSecnd.ucharPtr(i,j)[1] = 255;
-            imgSecnd.ucharPtr(i,j)[2] = 255;
-          }
-        }
-      }
-
-      // show currently printing layer area
-      cv.imshow('substResult1', imgFirst);
-
-      //thresholding of the foreground detected imgs to find difference
-      cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
-      cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2GRAY, 0);
-      cv.threshold(imgFirst, imgFirst, 100, 200, cv.THRESH_BINARY);
-      cv.threshold(imgSecnd, imgSecnd, 100, 200, cv.THRESH_BINARY);
-
-      cv.subtract(imgSecnd, imgFirst, dst, mask, dtype);
-
-      // find contour for extracted forground images
-      let dstForeground = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
-      let contours = new cv.MatVector();
-      let hierarchy = new cv.Mat();
-
-      cv.findContours(dst, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-      for (let i = 0; i < contours.size(); ++i) {
-        //random colors
-        let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
-                              Math.round(Math.random() * 255));
-        cv.drawContours(dstForeground, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
-      }
-
-      cv.imshow('substResult2', dstForeground);
-
-      dstForeground.delete();
     }
+
+    //draw foreground for img2
+    for(let i=0; i<imgSecnd.rows; i++){
+      for(let j=0; j<imgSecnd.cols; j++){
+        if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
+          imgSecnd.ucharPtr(i,j)[0] = 255;
+          imgSecnd.ucharPtr(i,j)[1] = 255;
+          imgSecnd.ucharPtr(i,j)[2] = 255;
+        }
+      }
+    }
+
+    // show currently printing layer area
+    cv.imshow('substResult1', imgFirst);
+
+    //thresholding of the foreground detected imgs to find difference
+    cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
+    cv.cvtColor(imgSecnd, imgSecnd, cv.COLOR_RGBA2GRAY, 0);
+    cv.threshold(imgFirst, imgFirst, 100, 200, cv.THRESH_BINARY);
+    cv.threshold(imgSecnd, imgSecnd, 100, 200, cv.THRESH_BINARY);
+
+    cv.subtract(imgSecnd, imgFirst, dst, mask, dtype);
+
+    // find contour for extracted forground images
+    let dstForeground = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
+    let contours = new cv.MatVector();
+    let hierarchy = new cv.Mat();
+
+    cv.findContours(dst, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+    for (let i = 0; i < contours.size(); ++i) {
+      //random colors
+      let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+      Math.round(Math.random() * 255));
+      cv.drawContours(dstForeground, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+    }
+
+    cv.imshow('substResult2', dstForeground);
+
+    dstForeground.delete();
+  }
 } //EOF func foregroundDetection (foreground detection & thresholding)
 
 
@@ -153,7 +153,7 @@ function captureToExtractSketch(){
 
       capturedImgOjects.push(data_uri);
       document.getElementById("results1").innerHTML =
-        '<img src="'+data_uri+'" id="imgSketchExtraction"/>';
+      '<img src="'+data_uri+'" id="imgSketchExtraction"/>';
     });
 
     // toggle button
@@ -242,85 +242,19 @@ function ExtractSketchContextBased(){
   for (let i = 0; i < contours.size(); ++i) {
 
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
-                          Math.round(Math.random() * 255));
+    Math.round(Math.random() * 255));
     cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
     // cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
-  if(extrusionCnt === 1){
-    console.log("clicked btn: ", clickedBtnID);
-
-    for(let j=0; j<contours.size(); j++){
-      let contour = contours.get(j);
-      let area = cv.contourArea(contour, false);
-
-      //post the largest area msg
-      if((area > areaLowerBound)){ // && (area < areaUpperBound)){
-        var scriptLine = 'var poly = polygon(['
-          , extrudePtrn = ''
-          , line = ''
-          , contourCnt = contour.data32F.length;
-
-        //to center polygon
-        // let initPt = {x: -1*contour.data32F[0], y: contour.data32F[1]} //first, find the offset of starting pts
-        // let circle = cv.minEnclosingCircle(contour);
-        //
-        // console.log("Check the original pts: ", initPt);
-        // console.log("Check the center of minimum enclosing circle: ", circle.center);
-        //
-        // let offsetX = ( -1*contour.data32F[0] ) + ( -1*circle.center.x );
-        // let offsetY = ( contour.data32F[1] ) + ( -1*circle.center.y );
-        // let translateScript = '.translate([' + offsetX + ',' + -1*circle.center.y + ',0])'
-        // translateScript = translateScript.replace(/e-4[0-9]+/g,''); //getting rid of excessive decimals
-        //
-        // cv.circle(extractImg, circle.center, circle.radius, cv.Scalar(255, 0, 0));
-
-        let translateScript = '.center()'
-        let rotateScript = '.rotateZ(90)' // to rotate for revolve from center, x-axis
-
-        for(let k=0; k<contourCnt; k+=2){
-          var x = contour.data32F[k] //- initialPoint.x;
-          var y = contour.data32F[k+1] //- initialPoint.y;
-
-          line = '[' + x + ',' + y + '],\n'
-          line = line.replace(/e-4[0-9]+/g,'');
-          scriptLine += line; //center
-        } // EOF for k
-        scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
-
-        if(clickedBtnID === 'extrudeBtn'){
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
-        }
-        else if(clickedBtnID === 'scaleBtn'){
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
-        }
-        else if(clickedBtnID === 'revolveBtn'){
-          extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
-        }
-        else if(clickedBtnID === 'twistBtn'){
-          console.log("extrude with twist")
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
-        }
-        else {
-          //default;
-        }
-        //rotate might not useful for linear/twist extrusion; see details for later
-      } // EOF area size checking
-    } //EOF checking all contour lines found
-    console.log("Current extrusion count: ", extrusionCnt++);
-  }
-  else if (extrusionCnt > 1){ //extrude excluding hole
+  if ((extrusionCnt > 1) || (clickedBtnID === 'holesBtn')){ //extrude excluding hole
 
     var largestPolyIdx = 0
-      , largestPolyScript = ''
-      , areaMaxSize = areaLowerBound
-      , polygonHoles = [] //array of var poly = polygon([]) scripts
-      , polygonHoleScripts = '' //integrated script to extrude
+    , largestPolyScript = ''
+    , areaMaxSize = areaLowerBound
+    , polygonHoles = [] //array of var poly = polygon([]) scripts
+    , polygonHoleScripts = '' //integrated script to extrude
 
     for(let j=0; j<contours.size(); j++){
       let contour = contours.get(j);
@@ -329,7 +263,7 @@ function ExtractSketchContextBased(){
       //post the largest area msg
       if((area > areaLowerBound) && (area < areaUpperBound)){
         var scriptLine = 'var poly = polygon(['
-          , contourCnt = contour.data32F.length;
+        , contourCnt = contour.data32F.length;
 
         //to center polygon
         let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
@@ -371,26 +305,83 @@ function ExtractSketchContextBased(){
     var height = document.getElementById('extrudeHeightInput').value;
 
     //***************************** this is to create holes; *****************************//
-    // var extrudeScript1 = '   var a = linear_extrude({height:' + height + '}, poly);\n';
-    // var extrudeScript2 = '   var integratedHoles = linear_extrude({height: ' + (height+1) +' }, poly0);\n'
-    //     + '   polygons.forEach((polys) => { \n'
-    //     + '      var newPoly = linear_extrude({height:6}, polys);\n'
-    //     + '      integratedHoles = union(integratedHoles, newPoly); \n'
-    //     + '   });'
-    //
-    // scriptLine = 'function main(){ \n'
-    //             +'   var polygons = [];\n'
-    //             + largestPolyScript + ';\n'  //largest area for linear extrusion
-    //             + polygonHoleScripts  //smaller areas for creating holes
-    //             + extrudeScript1  + extrudeScript2
-    //             + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
-    //*************************************************************************************//
+    var extrudeScript1 = '   var a = linear_extrude({height:' + height + '}, poly);\n';
+    var extrudeScript2 = '   var integratedHoles = linear_extrude({height: ' + (height+1) +' }, poly0);\n'
+    + '   polygons.forEach((polys) => { \n'
+    + '      var newPoly = linear_extrude({height:6}, polys);\n'
+    + '      integratedHoles = union(integratedHoles, newPoly); \n'
+    + '   });'
 
-    scriptLine = scripts.replace('polygon(', '').substring(0, scriptLine.length - 1);
     scriptLine = 'function main(){ \n'
-                  + 'rectangular_extrude(poly,  {w: 0.1, h: 3, closed: true});'
-                  + '}' //rectangular_extrude along the line
+    +'   var polygons = [];\n'
+    + largestPolyScript + ';\n'  //largest area for linear extrusion
+    + polygonHoleScripts  //smaller areas for creating holes
+    + extrudeScript1  + extrudeScript2
+    + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
+    // *************************************************************************************//
 
+    // ***************************** Replace this after test succeed *****************************//
+    // scriptLine = scripts.replace('polygon(', '').substring(0, scriptLine.length - 1);
+    // scriptLine = 'function main(){ \n'
+    //               + scriptLine //define 2D path
+    //               + 'var outlines = rectangular_extrude(poly,  {w: 0.05, h: 3, closed: true});\n'
+    //               + 'return outlines..scale([38.8, 38.8,1]); \n }' //rectangular_extrude along the line
+    // *************************************************************************************//
+
+    console.log(scriptLine);
+
+  }
+  else if (extrusionCnt === 1){
+    console.log("clicked btn: ", clickedBtnID);
+
+    for(let j=0; j<contours.size(); j++){
+      let contour = contours.get(j);
+      let area = cv.contourArea(contour, false);
+
+      //post the largest area msg
+      if((area > areaLowerBound)){ // && (area < areaUpperBound)){
+        var scriptLine = 'var poly = polygon(['
+        , extrudePtrn = ''
+        , line = ''
+        , contourCnt = contour.data32F.length;
+
+        let translateScript = '.center()'
+        let rotateScript = '.rotateZ(90)' // to rotate for revolve from center, x-axis
+
+        for(let k=0; k<contourCnt; k+=2){
+          var x = contour.data32F[k] //- initialPoint.x;
+          var y = contour.data32F[k+1] //- initialPoint.y;
+
+          line = '[' + x + ',' + y + '],\n'
+          line = line.replace(/e-4[0-9]+/g,'');
+          scriptLine += line; //center
+        } // EOF for k
+        scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
+
+        if(clickedBtnID === 'extrudeBtn'){
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
+        }
+        else if(clickedBtnID === 'scaleBtn'){
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
+        }
+        else if(clickedBtnID === 'revolveBtn'){
+          extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
+        }
+        else if(clickedBtnID === 'twistBtn'){
+          console.log("extrude with twist")
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
+        }
+        else {
+          //default;
+        }
+        //rotate might not useful for linear/twist extrusion; see details for later
+      } // EOF area size checking
+    } //EOF checking all contour lines found
+    console.log("Current extrusion count: ", extrusionCnt++);
   } // EOF extrusionCnt > 1
 
   var msg = {
