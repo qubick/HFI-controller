@@ -8,7 +8,7 @@ var capturedToExtrude = false;
 var capturedToRevolve = false;
 var capturedToTwist = false;
 
-var extrusionCnt = 0;
+var extrusionCnt = 1;
 
 //common vars for CV
 var mask = new cv.Mat();
@@ -17,7 +17,7 @@ var dtype = -1;
 
 var rect = new cv.Rect(50,20,200,180); //set to printing base size shown in the cam
 const areaLowerBound = 30;
-const areaUpperBound = 6000;
+const areaUpperBound = 10000;
 
 var extHeight = 10;
 var scaleFactorToBedSize = 13.6;
@@ -174,7 +174,6 @@ function captureToExtractSketch(){
 
     if(clickedBtnID === 'extrudeBtn'){
       document.getElementById('extrudeBtn').value = "Capture to Extrude";
-      console.log("current extrusion cycle: ", ++extrusionCnt);
     }
     else if(clickedBtnID === 'revolveBtn'){
       document.getElementById('revolveBtn').value = "Capture to Revolve";
@@ -184,7 +183,7 @@ function captureToExtractSketch(){
     }
 
     // if(extrusionCnt === 1)
-      ExtractFirstSketch(); //first extrusion, don't need to remove filament color
+      ExtractSketchContextBased(); //first extrusion, don't need to remove filament color
     // else
     //   ExtractAfterFirstSketch(); //exclude object color printed before
 
@@ -193,9 +192,14 @@ function captureToExtractSketch(){
 
 }
 
-function ExtractFirstSketch(){
+function ExtractSketchContextBased(){
 
   let extractImg = cv.imread(imgSketchExtraction);
+
+  //scale to reduce self-intersecting pts
+  // console.log("see if can get image size: ", extractImg);
+  // let dsize = new cv.Size(extractImg.rows*1.5, extractImg.cols*1.5);
+  // cv.resize(extractImg, extractImg, dsize, 0, 0, cv.INTER_AREA);
 
   //params to operate subtract
   let bgdModel = new cv.Mat();
@@ -225,31 +229,33 @@ function ExtractFirstSketch(){
 
   cv.findContours(extractImg, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-  // for (let u = 0; u < contours.size(); ++u) {
-  //   let tmp = new cv.Mat();
-  //   let cnt = contours.get(u);
-  //   cv.approxPolyDP(cnt, tmp, 0, true);
-  //   poly.push_back(tmp);
-  //
-  //   cnt.delete(); tmp.delete();
-  // }
+  for (let u = 0; u < contours.size(); ++u) {
+    let tmp = new cv.Mat();
+    let cnt = contours.get(u);
+    cv.approxPolyDP(cnt, tmp, 0, true);
+    poly.push_back(tmp);
+
+    cnt.delete(); tmp.delete();
+  }
 
   for (let i = 0; i < contours.size(); ++i) {
 
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                           Math.round(Math.random() * 255));
-    cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
-    // cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
+    // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
+    cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
   }
   cv.imshow('substResult2', dest); //contour extraction result
 
   if(extrusionCnt === 1){
+    console.log("clicked btn: ", clickedBtnID);
+
     for(let j=0; j<contours.size(); j++){
       let contour = contours.get(j);
       let area = cv.contourArea(contour, false);
 
       //post the largest area msg
-      if((area > areaLowerBound) && (area < areaUpperBound)){
+      if((area > areaLowerBound)){ // && (area < areaUpperBound)){
         var scriptLine = 'var poly = polygon(['
           , extrudePtrn = ''
           , line = ''
@@ -272,43 +278,31 @@ function ExtractFirstSketch(){
 
         if(clickedBtnID === 'extrudeBtn'){
           extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
         }
         else if(clickedBtnID === 'revolveBtn'){
           extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
         }
         else if(clickedBtnID === 'twistBtn'){
+          console.log("extrude with twist")
           extrudePtrn = '\n return linear_extrude({height: 5, twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
         }
         else {
           //default;
         }
         //rotate might not useful for linear/twist extrusion; see details for later
-        scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
       } // EOF area size checking
     } //EOF checking all contour lines found
+    console.log("Current extrusion count: ", extrusionCnt++);
   }
   else if (extrusionCnt > 1){ //extrude excluding hole
-  //****************************************************
-  // openjscad sample
-  // var poly1 = polygon([[0,0],[1,0],[1,1]])
-  //        ,poly2 = polygon([[1,1],[2,1],[2,2]])
-  //        ,poly3 = polygon([[2,2],[3,2],[3,3]])
-  //        ,poly4 = polygon([[3,3],[4,3],[4,4]]);
-  //
-  //     poly.push(poly1, poly2, poly3, poly4);
-  //     var finalShape = linear_extrude({height:1}, poly1)
-  //
-  //     for(var i=0; i<poly.length-1; i++){
-  //         var aa = linear_extrude({height:1}, poly[i+1]);
-  //         finalShape = union(finalShape, aa);
-  //     }
-  //
-  //     return finalShape;
-  //****************************************************
+
     var largestPolyIdx = 0
       , largestPolyScript = ''
-      , areaMaxSize = areaLowerBound;
-    var polygonHoles = [] //array of var poly = polygon([]) scripts
+      , areaMaxSize = areaLowerBound
+      , polygonHoles = [] //array of var poly = polygon([]) scripts
       , polygonHoleScripts = '' //integrated script to extrude
 
     for(let j=0; j<contours.size(); j++){
