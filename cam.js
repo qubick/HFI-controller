@@ -2,13 +2,7 @@ var capturedImgOjects = [];
 var pausedPrint = false;
 
 var capturedforExtraction = false;
-
-//sketch extrusion type
-var capturedToExtrude = false;
-var capturedToRevolve = false;
-var capturedToTwist = false;
-
-var extrusionCnt = 1;
+var extrusionCnt = 1; //intervention count
 
 //common vars for CV
 var mask = new cv.Mat();
@@ -24,6 +18,8 @@ var scaleFactorToBedSize = 13.6;
 
 // vars to clear images
 var areaToRemove = new cv.Mat();
+var insertObjTranslateValue = {};
+
 
 // configure
 Webcam.set({
@@ -89,7 +85,7 @@ function foregroundDetection(){
     cv.grabCut(imgFirst, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
     cv.grabCut(imgSecnd, mask, rect, bgdModel, fgdModel, 1, cv.GC_INIT_WITH_RECT);
 
-    //draw foreground for img1
+    //draw foreground for "Before" insertion
     for(let i=0; i<imgFirst.rows; i++){
       for(let j=0; j<imgFirst.cols; j++){
         if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
@@ -100,7 +96,7 @@ function foregroundDetection(){
       }
     }
 
-    //draw foreground for img2
+    //draw foreground for "After" insertion
     for(let i=0; i<imgSecnd.rows; i++){
       for(let j=0; j<imgSecnd.cols; j++){
         if(mask.ucharPtr(i,j)[0] === 0 || mask.ucharPtr(i,j)[0] === 2){
@@ -112,7 +108,7 @@ function foregroundDetection(){
     }
 
     // show currently printing layer area
-    cv.imshow('substResult1', imgFirst);
+    cv.imshow('substResult1', imgFirst); // a 3D object currently being printed
 
     //thresholding of the foreground detected imgs to find difference
     cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
@@ -120,24 +116,54 @@ function foregroundDetection(){
     cv.threshold(imgFirst, imgFirst, 100, 200, cv.THRESH_BINARY);
     cv.threshold(imgSecnd, imgSecnd, 100, 200, cv.THRESH_BINARY);
 
-    cv.subtract(imgSecnd, imgFirst, dst, mask, dtype);
 
-    // find contour for extracted forground images
-    let dstForeground = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
-    let contours = new cv.MatVector();
+    // find contour for extracted forground objects
+    let dstForegroundOrigin = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3)
+      , dstForegroundInsert = cv.Mat.zeros(dst.cols, dst.rows, cv.CV_8UC3);
+    let contoursOrigin = new cv.MatVector()
+      , contoursInsert = new cv.MatVector();
     let hierarchy = new cv.Mat();
 
-    cv.findContours(dst, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-    for (let i = 0; i < contours.size(); ++i) {
+
+    // find contour of the original model being printed
+    cv.findContours(imgFirst, contoursOrigin, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+    for (let i = 0; i < contoursOrigin.size(); ++i) {
       //random colors
       let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
       Math.round(Math.random() * 255));
-      cv.drawContours(dstForeground, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
+      cv.drawContours(dstForegroundOrigin, contoursOrigin, i, color, 1, cv.LINE_8, hierarchy, 100);
+    }
+    let cntOriginObject = contoursOrigin.get(0);
+    let ptsOriginObject = (cv.minEnclosingCircle(cntOriginObject)).center;
+
+    // find contour of inserted object by background subtraction
+    cv.subtract(imgSecnd, imgFirst, dst, mask, dtype); // dst = img after insertion(2nd) - before insertion(1st)
+    cv.findContours(dst, contoursInsert, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+    for (let i = 0; i < contoursInsert.size(); ++i) {
+      //random colors
+      let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+      Math.round(Math.random() * 255));
+      cv.drawContours(dstForegroundInsert, contoursInsert, i, color, 1, cv.LINE_8, hierarchy, 100);
+    }
+    let cntInsertObject = contoursInsert.get(0);
+    let ptsInsertObject = (cv.minEnclosingCircle(cntInsertObject)).center;
+
+
+    console.log("Center pts of the original object: ", ptsOriginObject);
+    console.log("Center pts of the inserted object: ", ptsInsertObject);
+    cv.imshow('substResult1', dstForegroundOrigin); // a 3D object currently being printed
+    cv.imshow('substResult2', dstForegroundInsert);
+
+
+    insertObjTranslateValue = {
+      x: ptsOriginObject.x - ptsInsertObject.x,
+      y: ptsInsertObject.y - ptsInsertObject.y
     }
 
-    cv.imshow('substResult2', dstForeground);
-
-    dstForeground.delete();
+    contoursOrigin.delete();
+    contoursInsert.delete();
+    dstForegroundOrigin.delete();
+    dstForegroundInsert.delete();
   }
 } //EOF func foregroundDetection (foreground detection & thresholding)
 
@@ -288,8 +314,6 @@ function ExtractSketchContextBased(){
       } // EOF areaThreshold checking
     } // EOF for j, finished going through all contourlines detected
 
-    // console.log("index of the largest area: ", largestPolyIdx);
-    // console.log("# of polygons: ", polygonHolesScript.length);
     if(largestPolyIdx > -1){
       polygonHoles.splice(largestPolyIdx, 1); //remove the largest (single value);
     }
@@ -307,17 +331,17 @@ function ExtractSketchContextBased(){
     //***************************** this is to create holes; *****************************//
     var extrudeScript1 = '   var a = linear_extrude({height:' + height + '}, poly);\n';
     var extrudeScript2 = '   var integratedHoles = linear_extrude({height: ' + (height+1) +' }, poly0);\n'
-    + '   polygons.forEach((polys) => { \n'
-    + '      var newPoly = linear_extrude({height:6}, polys);\n'
-    + '      integratedHoles = union(integratedHoles, newPoly); \n'
-    + '   });'
+                        + '   polygons.forEach((polys) => { \n'
+                        + '      var newPoly = linear_extrude({height:6}, polys);\n'
+                        + '      integratedHoles = union(integratedHoles, newPoly); \n'
+                        + '   });'
 
     scriptLine = 'function main(){ \n'
-    +'   var polygons = [];\n'
-    + largestPolyScript + ';\n'  //largest area for linear extrusion
-    + polygonHoleScripts  //smaller areas for creating holes
-    + extrudeScript1  + extrudeScript2
-    + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
+                        +'   var polygons = [];\n'
+                        + largestPolyScript + ';\n'  //largest area for linear extrusion
+                        + polygonHoleScripts  //smaller areas for creating holes
+                        + extrudeScript1  + extrudeScript2
+                        + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
     // *************************************************************************************//
 
     // ***************************** Replace this after test succeed *****************************//
@@ -345,7 +369,10 @@ function ExtractSketchContextBased(){
         , line = ''
         , contourCnt = contour.data32F.length;
 
-        let translateScript = '.center()'
+        // let translateScript = '.center()'
+        let translateScript = '.translate([' + -1*contour.data32F[0] + ',' + -1*contour.data32F[1] + ',0])'
+        translateScript = translateScript.replace(/e-4[0-9]+/g,'');
+
         let rotateScript = '.rotateZ(90)' // to rotate for revolve from center, x-axis
 
         for(let k=0; k<contourCnt; k+=2){
@@ -373,7 +400,7 @@ function ExtractSketchContextBased(){
         else if(clickedBtnID === 'twistBtn'){
           console.log("extrude with twist")
           extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
+          scriptLine = 'function main(){ ' + scriptLine + '.center()' + extrudePtrn + '}' //close main
         }
         else {
           //default;
