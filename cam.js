@@ -134,7 +134,10 @@ function foregroundDetection(){
       cv.drawContours(dstForegroundOrigin, contoursOrigin, i, color, 1, cv.LINE_8, hierarchy, 100);
     }
     let cntOriginObject = contoursOrigin.get(0);
-    let ptsOriginObject = (cv.minEnclosingCircle(cntOriginObject)).center;
+    let mOrigin = cv.moments(cntOriginObject, false);
+    let cxOrigin = mInsert.m10/Moments.m00;
+    let cyOrigin = mInsert.m01/Moments.m00; //contourline center
+
 
     // find contour of inserted object by background subtraction
     cv.subtract(imgSecnd, imgFirst, dst, mask, dtype); // dst = img after insertion(2nd) - before insertion(1st)
@@ -146,8 +149,9 @@ function foregroundDetection(){
       cv.drawContours(dstForegroundInsert, contoursInsert, i, color, 1, cv.LINE_8, hierarchy, 100);
     }
     let cntInsertObject = contoursInsert.get(0);
-    let ptsInsertObject = (cv.minEnclosingCircle(cntInsertObject)).center;
-
+    let mInsert = cv.moments(cntInsertObject, false);
+    let cxInsert = mInsert.m10/Moments.m00;
+    let cyInsert = mInsert.m01/Moments.m00; //contourline center
 
     console.log("Center pts of the original object: ", ptsOriginObject);
     console.log("Center pts of the inserted object: ", ptsInsertObject);
@@ -156,10 +160,16 @@ function foregroundDetection(){
 
 
     insertObjTranslateValue = {
-      x: ptsOriginObject.x - ptsInsertObject.x,
-      y: ptsInsertObject.y - ptsInsertObject.y
+      x: cxOrigin - cxInsert,
+      y: cyOrigin - cyInsert
     }
+    console.log("Translate value: ", insertObjTranslateValue);
 
+    var scriptLine = 'function main(){'
+      // var originPoly = import original stl
+      // var insertPoly = import the inserted object stl
+      // return difference(originPoly, insertPoly.translate([insertObjTranslateValue.x, insertObjTranslateValue.y, 0]));
+    '}'
     contoursOrigin.delete();
     contoursInsert.delete();
     dstForegroundOrigin.delete();
@@ -187,6 +197,12 @@ function captureToExtractSketch(){
     if(clickedBtnID === 'extrudeBtn'){
       document.getElementById('extrudeBtn').value = "Extract Image"
     }
+    else if(clickedBtnID === "holesBtn"){
+      document.getElementById('holesBtn').value = "Extract Image"
+    }
+    else if(clickedBtnID === "dentBtn"){
+      document.getElementById('dentBtn').value = "Extract Image"
+    }
     else if(clickedBtnID === 'scaleBtn'){
       document.getElementById('scaleBtn').value = "Extract Image"
     }
@@ -200,16 +216,22 @@ function captureToExtractSketch(){
   else{
 
     if(clickedBtnID === 'extrudeBtn'){
-      document.getElementById('extrudeBtn').value = "Capture to Extrude";
+      document.getElementById('extrudeBtn').value = "Simple extrude";
+    }
+    else if(clickedBtnID === "holesBtn"){
+      document.getElementById('holesBtn').value = "Create holes"
+    }
+    else if(clickedBtnID === "dentBtn"){
+      document.getElementById('dentBtn').value = "Create dent"
     }
     else if(clickedBtnID === 'scaleBtn'){
-      document.getElementById('scaleBtn').value = "Capture to Scale"
+      document.getElementById('scaleBtn').value = "Scaling extrude"
     }
     else if(clickedBtnID === 'revolveBtn'){
-      document.getElementById('revolveBtn').value = "Capture to Revolve";
+      document.getElementById('revolveBtn').value = "Revolve";
     }
     else if(clickedBtnID === 'twistBtn'){
-      document.getElementById('twistBtn').value = "Capture to Twist";
+      document.getElementById('twistBtn').value = "Twist";
     }
 
     ExtractSketchContextBased(); //first extrusion, don't need to remove filament color
@@ -363,7 +385,7 @@ function ExtractSketchContextBased(){
       let area = cv.contourArea(contour, false);
 
       //post the largest area msg
-      if((area > areaLowerBound)){ // && (area < areaUpperBound)){
+      // if((area > areaLowerBound)){ // && (area < areaUpperBound)){
         var scriptLine = 'var poly = polygon(['
         , extrudePtrn = ''
         , line = ''
@@ -389,6 +411,14 @@ function ExtractSketchContextBased(){
           extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
           scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
         }
+        else if(clickedBtnID === "dentBtn"){
+          extrudePtrn = '\n var polyBase = linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8, 1]);'
+          scriptLine = 'funtion main(){' + scriptLine + translateScript
+                        + extrudePtrn
+                        + 'var polyCut = cylinder({h:params.height, r:cylinderRad, center:true}).rotateX(90).translate([0,0,cylinderRad+5]);'
+                        + 'return difference(polyBase, polyCut); \n'
+                        + ' }'
+        }
         else if(clickedBtnID === 'scaleBtn'){
           extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
           scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
@@ -400,13 +430,13 @@ function ExtractSketchContextBased(){
         else if(clickedBtnID === 'twistBtn'){
           console.log("extrude with twist")
           extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
-          scriptLine = 'function main(){ ' + scriptLine + '.center()' + extrudePtrn + '}' //close main
+          scriptLine = 'function main(){ ' + scriptLine + '.center("x","y")' + extrudePtrn + '}' //close main
         }
         else {
           //default;
         }
         //rotate might not useful for linear/twist extrusion; see details for later
-      } // EOF area size checking
+      // } // EOF area size checking
     } //EOF checking all contour lines found
     console.log("Current extrusion count: ", extrusionCnt++);
   } // EOF extrusionCnt > 1
