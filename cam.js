@@ -135,8 +135,8 @@ function foregroundDetection(){
     }
     let cntOriginObject = contoursOrigin.get(0);
     let mOrigin = cv.moments(cntOriginObject, false);
-    let cxOrigin = mInsert.m10/Moments.m00;
-    let cyOrigin = mInsert.m01/Moments.m00; //contourline center
+    let cxOrigin = mOrigin.m10/mOrigin.m00;
+    let cyOrigin = mOrigin.m01/mOrigin.m00; //contourline center
 
 
     // find contour of inserted object by background subtraction
@@ -150,11 +150,11 @@ function foregroundDetection(){
     }
     let cntInsertObject = contoursInsert.get(0);
     let mInsert = cv.moments(cntInsertObject, false);
-    let cxInsert = mInsert.m10/Moments.m00;
-    let cyInsert = mInsert.m01/Moments.m00; //contourline center
+    let cxInsert = mInsert.m10/mInsert.m00;
+    let cyInsert = mInsert.m01/mInsert.m00; //contourline center
 
-    console.log("Center pts of the original object: ", ptsOriginObject);
-    console.log("Center pts of the inserted object: ", ptsInsertObject);
+    console.log("Center pts of the original object: ", cxOrigin, cyOrigin);
+    console.log("Center pts of the inserted object: ", cxInsert, cyInsert);
     cv.imshow('substResult1', dstForegroundOrigin); // a 3D object currently being printed
     cv.imshow('substResult2', dstForegroundInsert);
 
@@ -337,11 +337,9 @@ function ExtractSketchContextBased(){
     } // EOF for j, finished going through all contourlines detected
 
     if(largestPolyIdx > -1){
-      polygonHoles.splice(largestPolyIdx, 1); //remove the largest (single value);
+      polygonHoles.splice(largestPolyIdx, 1); //remove the largest (single value) from detected contourlines array;
     }
-    // var len = polygonHoles.length;
-    // console.log("# of polygons to create holes: ", len);
-    polygonHoles.pop(); //remove the last element, last is always the largest area?
+    // polygonHoles.pop(); //remove the last element, last is always the largest area?
 
     polygonHoles.forEach((holes, i) =>{
       var line = [holes.slice(0,8), i, holes.slice(8)].join('');
@@ -364,7 +362,6 @@ function ExtractSketchContextBased(){
                         + polygonHoleScripts  //smaller areas for creating holes
                         + extrudeScript1  + extrudeScript2
                         + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
-    // *************************************************************************************//
 
     // ***************************** Replace this after test succeed *****************************//
     // scriptLine = scripts.replace('polygon(', '').substring(0, scriptLine.length - 1);
@@ -383,6 +380,9 @@ function ExtractSketchContextBased(){
     for(let j=0; j<contours.size(); j++){
       let contour = contours.get(j);
       let area = cv.contourArea(contour, false);
+      let rect = cv.boundingRect(contour);
+
+console.log("see what can we learn from bounding rectangle", rect);
 
       //post the largest area msg
       // if((area > areaLowerBound)){ // && (area < areaUpperBound)){
