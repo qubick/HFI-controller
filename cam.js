@@ -382,10 +382,10 @@ function ExtractSketchContextBased(){
       let area = cv.contourArea(contour, false);
       let rect = cv.boundingRect(contour);
 
-console.log("see what can we learn from bounding rectangle", rect);
+      // console.log("see what can we learn from bounding rectangle", rect);
 
-      //post the largest area msg
-      // if((area > areaLowerBound)){ // && (area < areaUpperBound)){
+      //post the largest area for the most of extrusion patterns, except creating holes
+      if((area > areaLowerBound)){ // && (area < areaUpperBound)){
         var scriptLine = 'var poly = polygon(['
         , extrudePtrn = ''
         , line = ''
@@ -412,31 +412,37 @@ console.log("see what can we learn from bounding rectangle", rect);
           scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
         }
         else if(clickedBtnID === "dentBtn"){
-          extrudePtrn = '\n var polyBase = linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8, 1]);'
-          scriptLine = 'funtion main(){' + scriptLine + translateScript
+          let cylRadius = rect.height/2;
+          let cylHeight = rect.width;
+          let cylOffsetZ = cylRadius + extHeight;
+
+          extrudePtrn = '\n var polyBase = linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8, 1]).center();\n'
+          scriptLine = 'function main(){' + scriptLine + translateScript
                         + extrudePtrn
-                        + 'var polyCut = cylinder({h:params.height, r:cylinderRad, center:true}).rotateX(90).translate([0,0,cylinderRad+5]);'
+                        + 'var polyCut = cylinder({h:' + cylRadius + ', r:' + cylHeight + ', center:true}).rotateX(90).translate([0,0,' + cylOffsetZ + ']);\n'
                         + 'return difference(polyBase, polyCut); \n'
-                        + ' }'
+                        + ' }\n'
+
+          console.log(scriptLine);
         }
         else if(clickedBtnID === 'scaleBtn'){
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);'
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([38.8, 38.8,1]);\n'
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}\n' //close main
         }
         else if(clickedBtnID === 'revolveBtn'){
-          extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);' // emperical scale value
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}' //close main
+          extrudePtrn = '\n return rotate_extrude(poly).scale(13.6);\n' // emperical scale value
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + rotateScript + extrudePtrn + '}\n'
         }
         else if(clickedBtnID === 'twistBtn'){
           console.log("extrude with twist")
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);' //twist >> where could twist extrusion interesting?
-          scriptLine = 'function main(){ ' + scriptLine + '.center("x","y")' + extrudePtrn + '}' //close main
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);\n' //twist >> where could twist extrusion interesting?
+          scriptLine = 'function main(){ ' + scriptLine + '.center("x","y")' + extrudePtrn + '}\n'
         }
         else {
           //default;
         }
         //rotate might not useful for linear/twist extrusion; see details for later
-      // } // EOF area size checking
+      } // EOF area size checking
     } //EOF checking all contour lines found
     console.log("Current extrusion count: ", extrusionCnt++);
   } // EOF extrusionCnt > 1
