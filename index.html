@@ -49,12 +49,14 @@
 					<input type=text value="5" id="extrudeHeightInput">
 					<br/>
 					<!-- <input type=button value="Set height" onclick="getExtrudeHeight()" id="submitHeight"> -->
-					<input type=button value="Capture to extrude" onclick="captureToExtractSketch()" id="extrudeBtn">
-					<input type=button value="Capture to create holes" onclick="captureToExtractSketch()" id="holesBtn">
-					<input type=button value="Capture to scale" onclick="captureToExtractSketch()" id="scaleBtn">
-					<input type=button value="Capture to revolve" onclick="captureToExtractSketch()" id="revolveBtn">
-					<input type=button value="Capture to twist" onclick="captureToExtractSketch()" id="twistBtn">
-					</form>
+					Capture cam image to:
+					<input type=button value="Simple extrude" onclick="captureToExtractSketch()"	id="extrudeBtn">
+					<input type=button value="Create holes" onclick="captureToExtractSketch()"		id="holesBtn">
+					<input type=button value="Create dent" onclick="captureToExtractSketch()"			id="dentBtn">
+					<input type=button value="Scaling extrude" onclick="captureToExtractSketch()"	id="scaleBtn">
+					<input type=button value="Revolve" onclick="captureToExtractSketch()"					id="revolveBtn">
+					<input type=button value="Twist extrude" onclick="captureToExtractSketch()"		id="twistBtn">
+				</form>
 
 				<div id="imgs">
 					<div id="results1"></div>
