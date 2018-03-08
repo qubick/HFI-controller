@@ -1,5 +1,8 @@
 var Cylon = require('cylon');
 
+var gestureId = 0;
+// var
+
 exports.leapMotion = function(){
 
   Cylon.robot({
@@ -14,8 +17,8 @@ exports.leapMotion = function(){
     work: function(my){
       // my.leapmotion.on('frame', (payload) =>{
       //   console.log(payload);
-      //   return;
-      // })
+      //   // return;
+      // });
 
         // my.leapmotion.on('hand', (payload) => {
         //    console.log(payload.toString());
@@ -23,7 +26,21 @@ exports.leapMotion = function(){
         // });
         my.leapmotion.on('gesture', (payload) =>{
           // console.log(payload.toString());
-          console.log(payload.type)
+          gestureId = payload.pointableIds;
+
+          if(payload.type === 'circle'){
+              console.log("circle radius: ", payload.radius)
+              // port.write();
+          }
+          else if(payload.type === 'swipe'){
+              console.log("direction: ", payload.direction)
+          }
+          else if(payload.type === 'keyTap'){
+
+          }
+          else if(payload.type === 'screenTap'){
+
+          }
         });
     }
   }).start();
