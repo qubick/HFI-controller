@@ -21,10 +21,10 @@ var reqIdx = 0;
 
 // for gcodemovments
 var gcodeCommandsToPrinter;
-var queue = require('./queue.js');
+var queue = require('./libs/queue.js');
 var gcodeQueue = new queue.Queue();
 
-var leapMotion = require('./leapMotion.js');
+var leapMotion = require('./libs/leapMotion.js');
 
 //server main page
 app.get("/", (req, res) => {
@@ -34,7 +34,7 @@ app.get("/", (req, res) => {
 app.listen(5555, () => {
 	console.log('[Server]'.magenta, ' HFI controller app listening on port 5555'.white);
 
-	//create connection with the 3D printer
+	// create connection with the 3D printer
 	port = new SerialPort('/dev/cu.usbmodem1411', {
 		baudRate: 57600
 	});
@@ -123,7 +123,11 @@ http.createServer((req, res) => {
 				  if(err) return console.log(err);
 
 					let cmd1 = 'openjscad output/output.jscad';
-					let cmd2 = './CuraEngine/build/CuraEngine slice -j ./CuraEngine/resources/definitions/printrbot_play.def.json -e0 -l "output/output.stl" -o "output/test.gcode"'
+					let cmd2 = './CuraEngine/build/CuraEngine slice'
+										+ ' -j ./CuraEngine/resources/definitions/printrbot_play.def.json '
+										+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
+										+ ' -s layer_height_0="0.25"'
+										+ ' -s brim_line_count="10"'
 
 					// slicer settings for later
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
@@ -184,31 +188,35 @@ function sendCommand(){
 function runShellCommands(cmd1, cmd2){
 
 	console.log("\n[Server]".magenta, "run openjscand to generate STL from polygons")
-	try {
+	// try {
 		child = exec(cmd1, (err, stdout, stderr)=>{
 			// console.log('running openjscad script, stdout: '.blue + stdout);
 
 			if(err) console.log("exec error from running openjscad script: ".blue, err);
 			if(stderr) console.log('\n[Server]'.magenta, strerr.red);
 		});
-	}
-	catch(e){
-		console.log('[Server]'.magenta, 'failed to run Openjscad script: ', e)
-	}
+	// }
+	// catch(e){
+	// 	console.log('[Server]'.magenta, 'failed to run Openjscad script: ', e)
+	// }
 
 	//once the 1st cmd (run openjscad) done
 	console.log("\n[Server]".magenta, "run curaengine to generate gcode..")
-	try {
+	// try {
+		//*******>>>>>>>>>>>>>>>>>>>>>>>>>>
+		// here set z-offset with current extruder height
+		// so it can start from the top of the previous layers of objects
+
 		child = exec(cmd2, (err, stdout, stderr)=>{
 			// console.log('running slicer, stdout: '.blue + stdout);
 
 			if(err) console.log('exec error from running slicer: '.blue, err);
 			if(stderr) console.log('\n[Server]'.magenta, strerr.red);
 		});
-	}
-	catch(e) {
-		console.log('[Server]'.magenta, 'failed to run CuraEngine slicer: ', e)
-	}
+	// }
+	// catch(e) {
+	// 	console.log('[Server]'.magenta, 'failed to run CuraEngine slicer: ', e)
+	// }
 
 
 	//once the 2nd cmd (run cura engine) done, read gcode file and send to the printer queue
