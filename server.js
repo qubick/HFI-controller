@@ -10,19 +10,18 @@ var colors = require('colors');
 //for serial connection with the printer
 var SerialPort = require("serialport");
 var port;
-// = new SerialPort('/dev/cu.usbmodem1411', {
-// 	baudRate: 57600
-// });
-
 //for message channel with the client
 var pendingResponses = {};
 var clientQueues = {};
 var reqIdx = 0;
 
 // for gcodemovments
+var gcodeParser = require('./libs/parseGcode.js');
 var gcodeCommandsToPrinter;
 var queue = require('./libs/queue.js');
 var gcodeQueue = new queue.Queue();
+// var gcodeWallMvmtServer = [];
+
 
 var leapMotion = require('./libs/leapMotion.js');
 
@@ -80,10 +79,10 @@ http.createServer((req, res) => {
 	var clientId = parts[2];
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  if (parts[1] == "register") {
+  if (parts[1] === "register") {
     clientQueues[clientId] = [];
 
-  } else if (parts[1] == "ctos") { //recieve msg from the remote user/ar-user app
+  } else if (parts[1] === "ctos") { //recieve msg from the remote user/ar-user app
 		var body = JSON.parse(decodeURIComponent(parts[3]));//, 'base64').toString('binary');
 		console.log(body.commands);
 		var printerBehavior = body.commands.msg;
@@ -94,16 +93,20 @@ http.createServer((req, res) => {
 			if(printerBehavior === "start"){
 				console.log('[Server]'.magenta, "run cmd sender queue");
 
-				var content;
-				var filename = './assets/' + body.commands.file;
+				//**** file will be read when it is "opened", and data will be saved to gcodeWallMvmt
 
-				fs.readFile(filename, "utf8", function read(err, data){
-					if(err) throw err;
-					content = data;
-					gcodeCommandsToPrinter = content.split('\n');
 
-					sendCommand();
-				});
+				// var content;
+				// var filename = './assets/' + body.commands.file;
+				//
+				// fs.readFile(filename, "utf8", function read(err, data){
+				// 	if(err) throw err;
+				// 	content = data;
+				// 	gcodeCommandsToPrinter = content.split('\n');
+				//
+				//
+				// 	sendCommand();
+				// });
 
 			}
 			else if(printerBehavior === "printing"){
@@ -114,6 +117,21 @@ http.createServer((req, res) => {
 			else if(printerBehavior === "paused"){
 				console.log('[Server]'.magenta, "store curr position && home all axis ")
 				// port.write("G28 X Y Z\n"); //example: home all axis
+			}
+			else if(printerBehavior === "openFile"){
+				console.log('[Sever]'.magenta, 'open the file ', body.commands.filename, ' to interpret gcode');
+
+				var content;
+				var filename = './assets/' + body.commands.filename;
+
+				fs.readFile(filename, "utf8", function read(err, data){
+					if(err) throw err;
+					content = data;
+					gcodeCommandsToPrinter = content.split('\n');
+
+					gcodeParser.parseGcode(gcodeCommandsToPrinter);
+
+				});
 			}
 
 			else if(printerBehavior === "writeFile"){ //create a openjscad file from geometry,
@@ -178,6 +196,7 @@ http.createServer((req, res) => {
 function sendCommand(){
 	console.log("start sending commands...");
 
+	port.write("G21 X150 Y150 F1800"); //pull the printer head for testing
 	// 1. create a Queue if not defined;
 	// 2. read existing gcode file >> save in the queue
 	// 	2-1. queue will send cmd to printer if queue is not empty

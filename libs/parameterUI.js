@@ -63,7 +63,7 @@ function createPanel(){
   //file upload
   var params = new Params();
   panel.add(params, 'loadFile').name('Load 3D Model');
-  panel.add(params, 'print').name('Start printing');
+  panel.add(params, 'print').name('Start printing'); //this is now connected to the spiralization
   // panel.add(params, 'see2DPath').name('See contourline from image');
   panel.add(params, 'layer', 0, 300).name('See layers').listen(()=>{
   //   for(let i=0; i<layerNumber; i++){
