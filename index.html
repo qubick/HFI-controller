@@ -71,7 +71,6 @@
 			</div>
 
 			<!-- dat GUI hidden button -->
-			<input id="loadFileInput" type="file" onchange='openFile(event)' style="visibility:hidden" />
 			<form method="post" action="/">
 				<input type="submit" id="printStartInput" style="visibility:hidden"/>
 			</form>
@@ -82,7 +81,7 @@
 			<!-- for image processing -->
 			<script src="./opencvjs/opencv/build_js/bin/opencv.js" type="text/javascript"></script>
 			<script type="text/javascript" src="./js/webcam.min.js"></script>
-			<script language="JavaScript" src="libs/cam.js"></script>
+			<!-- <script language="JavaScript" src="libs/cam.js"></script> -->
 
 			<div id="container" left="150px" top="0px" class="droppable">
 				<script src="./build/three.js"></script>
@@ -108,9 +107,11 @@
 
 
 				<!-- <script src="./main.js"></script> -->
-				<script src="./libs/paramUI.js"></script>
+				<script src="./libs/parameterUI.js"></script>
 				<script src="./libs/editor.js"></script>
 				<script src="./libs/readGcode.js"></script>
+					<!-- hidden button for parameter UI -->
+					<input id="loadFileInput" type="file" onchange='openFile(event)' style="visibility:hidden" />
 
 			<input id="myInput" type="file" style="visibility:hidden" />
 		</body>
