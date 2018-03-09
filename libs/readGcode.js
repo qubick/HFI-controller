@@ -24,13 +24,19 @@ var openFile = (event) => { //this is for preview
   gcodeFileName = event.srcElement.files[0].name;
 
   reader.onload = function(){
-    var text = reader.result; //read file input result (gcode)
-    // var node = document.getElementById('output');
-    // node.innerText = text;
+    // var text = reader.result; //read file input result (gcode)
+    // // var node = document.getElementById('output');
+    // // node.innerText = text;
+    //
+    // do this at the server side
+    // lines = this.result.split('\n');
+    // parseGcode(lines);
+    var msgCommand = {
+      "msg": "openFile",
+      "filename": gcodeFileName
+    }
 
-    lines = this.result.split('\n');
-    parseGcode(lines);
-
+    channel.postMessage(msgCommand);
   }; //EOF onload()
   reader.readAsText(input.files[0]);
 }
@@ -67,7 +73,7 @@ function parseGcode(lines){
 
       gcodeChunks = lines[idx].split(' ');
       if(gcodeChunks[4])
-        z = gcodeChunks[4].substr(1); 
+        z = gcodeChunks[4].substr(1);
     }
 
     //this is common for any type of slicer
@@ -107,11 +113,11 @@ function parseGcode(lines){
         //   offsetX = -x;
         //   offsetY = -y;
         // }
-        mvmt = {
-          l : currLayer,
-          x : x,
-          y : z,
-          z : y //it is graphics axis
+        mvmt = { //make this as json object
+          "l" : currLayer,
+          "x" : x,
+          "y" : z,
+          "z" : y //it is graphics axis
         }
 
         if(wall || skin){

@@ -10,6 +10,7 @@ var colors = require('colors');
 //for serial connection with the printer
 var SerialPort = require("serialport");
 var port;
+
 //for message channel with the client
 var pendingResponses = {};
 var clientQueues = {};

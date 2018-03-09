@@ -5,10 +5,6 @@ var leftBoxUI, rightBoxUI, topBoxUI;
 
 var channel = new Channel("general"); // this is for general communication w/ server
 
-// var settings = {
-//   layer = 0.0;
-// }
-
 var panel = new dat.GUI();
 
 var Params = function(){

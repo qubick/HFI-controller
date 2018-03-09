@@ -1,8 +1,8 @@
 // Should reading gcode be done at the server side?
 var gcodeFileName;
 var layer = [];
-var gcodeWallMvmt = [];
-var gcodeSkinMvmt = [];
+var gcodeWallMvmt = [[]];
+var gcodeSkinMvmt = [[]];
 var gcodeSegments = []; //not sure yet if this is essential now
 
 var tmpIdx = 0;
@@ -84,17 +84,20 @@ exports.parseGcode = function(lines){
           "y" : z,
           "z" : y //it is graphics axis
         }
+        // var mvmt = [parseFloat(x), parseFloat(y), parseFloat(z)];
 
         if(wall || skin){
+          // gcodeWallMvmt[currLayer].push(mvmt);
           gcodeWallMvmt.push(mvmt);
         }
         if(fill){
+          // gcodeSkinMvmt[currLayer].push(mvmt);
           gcodeSkinMvmt.push(mvmt);
         }
 
-        if(gcodeWallMvmt.length > 2 ){
-          let len = gcodeWallMvmt.length - 1;
-          
+        if(gcodeWallMvmt[currLayer].length > 2 ){
+          let len = gcodeWallMvmt[currLayer].length - 1;
+
           if(gcodeWallMvmt[len].l === gcodeWallMvmt[len-1].l){
             let ax = parseFloat(gcodeWallMvmt[len].x);
             let ay = parseFloat(gcodeWallMvmt[len].y);
