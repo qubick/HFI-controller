@@ -1,11 +1,13 @@
 // Should reading gcode be done at the server side?
 var gcodeFileName;
 var layer = [];
-var gcodeWallMvmt = [[]];
-var gcodeSkinMvmt = [[]];
+var gcodeWallMvmt = [];
+var gcodeSkinMvmt = [];
+var gcodeFillMvmt = [];
 var gcodeSegments = []; //not sure yet if this is essential now
 
-var tmpIdx = 0;
+const WAVAMPLITUDE = 2;
+const CONSTDIST = 5;
 
 var x = 0, y = 0, z = 0 //movement command
     ,e = 0 //extrusion rate (e stepper)
@@ -20,7 +22,6 @@ var skin = false, wall = false, fill = false;
 
 //maybe do this from serverside?
 exports.parseGcode = function(lines){
-
   var z = 0; //base height
 
   lines.forEach((line, i) => {
@@ -81,33 +82,68 @@ exports.parseGcode = function(lines){
         mvmt = {
           "l" : currLayer,
           "x" : x,
-          "y" : z,
-          "z" : y //it is graphics axis
+          "y" : y,
+          "z" : z //it is graphics axis
         }
         // var mvmt = [parseFloat(x), parseFloat(y), parseFloat(z)];
 
-        if(wall || skin){
+        if(wall){
           // gcodeWallMvmt[currLayer].push(mvmt);
           gcodeWallMvmt.push(mvmt);
         }
-        if(fill){
-          // gcodeSkinMvmt[currLayer].push(mvmt);
+        if(skin){ //don't manipulate top/bottom covers
           gcodeSkinMvmt.push(mvmt);
         }
+        if(fill){
+          // gcodeSkinMvmt[currLayer].push(mvmt);
+          gcodeFillMvmt.push(mvmt);
+        }
 
-        if(gcodeWallMvmt[currLayer].length > 2 ){
-          let len = gcodeWallMvmt[currLayer].length - 1;
+        if(gcodeWallMvmt.length > 2 ){
+          let len = gcodeWallMvmt.length - 1;
 
-          if(gcodeWallMvmt[len].l === gcodeWallMvmt[len-1].l){
+          if(gcodeWallMvmt[len].l === gcodeWallMvmt[len-1].l){ //else >> no dist btw layers
             let ax = parseFloat(gcodeWallMvmt[len].x);
             let ay = parseFloat(gcodeWallMvmt[len].y);
             let bx = parseFloat(gcodeWallMvmt[len-1].x);
             let by = parseFloat(gcodeWallMvmt[len-1].y);
 
             let dist = Math.sqrt((ax-bx)*(ax-bx) + (ay-by)*(ay-by));
-            console.log('[Parser]'.blue, 'dist: ', dist);
+
+            //interpolate gaps with more points to add deformation
+            let prevX = ax, prevY = by,
+                nextX, nextY;
+
+            while (dist > CONSTDIST){
+              let theta = Math.atan(Math.abs(by-ay)/Math.abs(ax-bx));
+
+              if(prevX < nextX)
+								prevX = prevX + CONSTDIST * Math.cos(theta);
+							else if (prevX > nextX)
+								prevX = prevX - CONSTDIST * Math.cos(theta);
+
+              if(prevY < nextY)
+								prevY = prevY + CONSTDIST * Math.sin(theta)
+							else if(prevY > nextY)
+								prevY = prevY - CONSTDIST * Math.sin(theta)
+
+              dist -= CONSTDIST;
+
+              //add new discrete pts to the array
+              mvmt = {
+                "l" : currLayer,
+                "x" : prevX,
+                "y" : prevY,
+                "z" : z //it is graphics axis
+              }
+              gcodeWallMvmt.push(mvmt);
+            }
+            // if(dist != 0)
+            //   console.log('[Parser]'.blue, 'currLayer:', gcodeWallMvmt[len].l, 'dist: ', dist);
           }
         }
       } //EOF if line[0] == G1
     });// EOF line.forEach()
+
+    console.log(gcodeWallMvmt.length);
 } //EOF function
