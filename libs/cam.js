@@ -361,7 +361,7 @@ function ExtractSketchContextBased(){
                         + largestPolyScript + ';\n'  //largest area for linear extrusion
                         + polygonHoleScripts  //smaller areas for creating holes
                         + extrudeScript1  + extrudeScript2
-                        + '\n return difference(a, integratedHoles).scale([38.8, 38.8,1]);}' //empirical scale
+                        + '\n return difference(a, integratedHoles).scale([40, 40,1]);}' //empirical scale
 
     // ***************************** Replace this after test succeed *****************************//
     // scriptLine = scripts.replace('polygon(', '').substring(0, scriptLine.length - 1);
@@ -398,18 +398,18 @@ function ExtractSketchContextBased(){
         let rotateScript = '.rotateZ(90)' // to rotate for revolve from center, x-axis
 
         for(let k=0; k<contourCnt; k+=2){
-          var x = contour.data32F[k] //- initialPoint.x;
-          var y = contour.data32F[k+1] //- initialPoint.y;
+          var x = contour.data32F[k];
+          var y = contour.data32F[k+1];
 
           line = '[' + x + ',' + y + '],\n'
           line = line.replace(/e-4[0-9]+/g,'');
           scriptLine += line; //center
         } // EOF for k
-        scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
+        scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])';
 
         if(clickedBtnID === 'extrudeBtn'){
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([39, 39,1]);'
-          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}' //close main
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + '}, poly).scale([39, 39,1]);' // should this be centered even with the translateScript?
+          scriptLine = 'function main(){ ' + scriptLine + translateScript + extrudePtrn + '}'
         }
         else if(clickedBtnID === "dentBtn"){
           let cylRadius = rect.height/2;
@@ -435,7 +435,7 @@ function ExtractSketchContextBased(){
         }
         else if(clickedBtnID === 'twistBtn'){
           console.log("extrude with twist")
-          extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([38.8, 38.8,1]);\n' //twist >> where could twist extrusion interesting?
+          extrudePtrn = '\n return linear_extrude({height:' + extHeight + ', twist: 90}, poly).scale([40, 40,1]);\n' //twist >> where could twist extrusion interesting?
           scriptLine = 'function main(){ ' + scriptLine + '.center("x","y")' + extrudePtrn + '}\n'
         }
         else {
@@ -448,7 +448,7 @@ function ExtractSketchContextBased(){
   } // EOF extrusionCnt > 1
 
   var msg = {
-    msg: "writeFile",
+    msg: "createGcode",
     script: scriptLine
   };
 
