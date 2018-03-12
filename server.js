@@ -1,10 +1,14 @@
 //server console message color scheme: Magenta
 
+//gcode is sent to the printer in two case:
+//		1. file is opened by client's request to open file
+//		2. stl file is created by any hand drawn sketches
+
 var express = require("express");
 var app = express();
 var fs = require("fs");
 var http = require("http");
-var exec = require('child_process').execSync, child; //ensure asynchronous
+var exec = require('child_process').execSync, child1, child2; //ensure asynchronous
 var colors = require('colors');
 
 //for serial connection with the printer
@@ -15,14 +19,14 @@ var port;
 var pendingResponses = {};
 var clientQueues = {};
 var reqIdx = 0;
+var printerBehavior = '' //this should be gloabl so can be checked all the time
 
 // for gcodemovments
-var gcodeParser = require('./libs/parseGcode.js');
-var gcodeCommandsToPrinter;
+var parser = require('./libs/parseGcode.js');
+// var gcodeCommandsToPrinter;
 var queue = require('./libs/queue.js');
-var gcodeQueue = new queue.Queue();
-// var gcodeWallMvmtServer = [];
-
+var gcodeQueue;
+var currGcodeLineIdx = 0; //this is the latest gcode line
 
 var leapMotion = require('./libs/leapMotion.js');
 
@@ -46,10 +50,7 @@ app.listen(5555, () => {
 		console.log('[Server]'.magenta, 'USB1411 opened to the 3D printer'.white);
 		exports.port = port;
 
-		// port.write('M109 S250.000000\n'); //set temperature and wait until reach for the next command
-		// port.write('G0 F3600 X30 Y50 \n'); //test move
-		// port.write('G0 Y30\n'); //step by step
-		port.write('G28 F1800 X Y Z \n'); //home all axis
+		port.write('G28 F1800 X Y Z \n'); //home all axis, test move
 
 	}
 	else {
@@ -62,8 +63,6 @@ app.post('/', (req, res) => {
 	console.log("POST message recieved from the app")
 	// res.send(200); //no response w/ ('ok') message
 	res.sendfile('index.html'); //refresh screen
-
-	sendCommand();
 });
 
 app.get(/^(.+)$/, (req, res) => {
@@ -87,25 +86,25 @@ http.createServer((req, res) => {
 	else if (parts[1] === "ctos") { //recieve msg from the remote user/ar-user app
 		var body = JSON.parse(decodeURIComponent(parts[3]));//, 'base64').toString('binary');
 		console.log(body.commands);
-		var printerBehavior = body.commands.msg;
+		printerBehavior = body.commands.msg;
 
 		if(body.channelId === "general"){
 			console.log('[Server]'.magenta, "curr printer behavior: ", printerBehavior)
 
 			if(printerBehavior === "start"){
-				console.log('[Server]'.magenta, "run cmd sender queue");
+				console.log('[Server]'.magenta, "Start: run cmd sender queue");
 			}
 			else if(printerBehavior === "printing"){
-				console.log('[Server]'.magenta, "restore paused position && resume sending queue")
+				console.log('[Server]'.magenta, "Printing: restore paused position && resume sending queue")
 				// port.write("G0 X10 F1800\n"); //example pos to return back
 				// port.write("G0 Y10\n");
 			}
 			else if(printerBehavior === "paused"){
-				console.log('[Server]'.magenta, "store curr position && home all axis ")
-				// port.write("G28 X Y Z\n"); //example: home all axis
+				console.log('[Server]'.magenta, "Paused: store curr position && home all axis ")
+				port.write("G28 X Y Z\n"); //example: home all axis
 			}
 			else if(printerBehavior === "openFile"){
-				console.log('[Sever]'.magenta, 'open the file ', body.commands.filename, ' to interpret gcode');
+				console.log('[Sever]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
 
 				var content;
 				var filename = './assets/' + body.commands.filename;
@@ -113,9 +112,14 @@ http.createServer((req, res) => {
 				fs.readFile(filename, "utf8", function read(err, data){
 					if(err) throw err;
 					content = data;
-					gcodeCommandsToPrinter = content.split('\n');
+					var gcodes = data.split('\n');
 
-					gcodeParser.parseGcode(gcodeCommandsToPrinter);
+					parser.parseGcode(gcodes, ()=>{
+
+						//when gcodes is done for parsing;
+						console.log('[Sever]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
+						sendCommand();
+					}); //parseGcode
 				});
 			}
 			else if(printerBehavior === "createGcode"){ //create a openjscad file from geometry,
@@ -153,7 +157,7 @@ http.createServer((req, res) => {
     res.end();
 
   }
-	else if (parts[0] == "stoc") { //initiate server connection
+	else if (parts[0] === "stoc") { //initiate server connection
 		if(res.setHeader("Cache-Control", "no-cache"))
 
 		if(clientQueues){
@@ -171,18 +175,32 @@ http.createServer((req, res) => {
 function sendCommand(){
 	console.log("start sending commands...");
 
-	port.write("G21 X150 Y150 F1800"); //pull the printer head for testing
 	// 1. create a Queue if not defined;
+	// if(gcdoeQueue === undefined){
+	// 	 gcodeQueue = new queue.Queue();
+	// }
 	// 2. read existing gcode file >> save in the queue
-	// 	2-1. queue will send cmd to printer if queue is not empty
-	// 3. wait if the queue is full, retry to send
+	var gcodesTo3DP = parser.gcodeSegments;
+	for(let cnt=currGcodeLineIdx; cnt<gcodesTo3DP.length; cnt++){
+
+		if(printerBehavior === "paused"){ //always check if this is true << should this be an interrupt??
+			console.log("will stop the machine");
+			port.write("G28 X Y Z\n");
+			currGcodeLineIdx = cnt;
+			break;
+		}
+		else {
+			console.log('[Server]'.magenta, "Sending ", cnt, "th commands to 3D printer...")
+			port.write(gcodesTo3DP[cnt]);
+		}
+	} //end forloop
 }
 
 
 function runShellCommands(cmd1, cmd2){
 
 	console.log("[Server]".magenta, "run openjscand to generate STL from polygons")
-	child = exec(cmd1, (err, stdout, stderr)=>{
+	child1 = exec(cmd1, (err, stdout, stderr)=>{
 		// console.log('running openjscad script, stdout: '.blue + stdout);
 
 		if(err) console.log("exec error from running openjscad script: ".blue, err);
@@ -191,7 +209,7 @@ function runShellCommands(cmd1, cmd2){
 
 	//once the 1st cmd (run openjscad) done
 	console.log("[Server]".magenta, "run curaengine to generate gcode..")
-	child = exec(cmd2, (err, stdout, stderr)=>{
+	child2 = exec(cmd2, (err, stdout, stderr)=>{
 		// console.log('running slicer, stdout: '.blue + stdout);
 
 		if(err) console.log('exec error from running slicer: '.blue, err);
@@ -199,16 +217,19 @@ function runShellCommands(cmd1, cmd2){
 	});
 
 	//once the 2nd cmd (run curaEngine) done, read gcode file and send to the printer queue
-	fs.readFile("output/test.gcode", "utf8", (err, data) => {
-		if(err) throw err;
+	// if(child2) //as exec is execSync
+		fs.readFile("output/output.gcode", "utf8", (err, data) => {
+			if(err) throw err;
 
-		// console.log(data.blue);
-		var gcodes = data.split('\n');
-		gcodeParser.parseGcode(gcodes); //read gcode and interpolate
-		gcodes.forEach((gcodeline) =>{  //this should be running background until it is paused
+			// console.log(data.blue);
+			var gcodes = data.split('\n');
 
-			port.write(gcodeline + '\n'); //replace this to send gcode to queue
+			//*********>>>>>>>>>>>>> this is too much of chaining... Separate this from run shell command
+			parser.parseGcode(gcodes, ()=>{
+				console.log('[Server]'.magenta, 'finish parsing gcodes from sketch generation')
+				console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
 
-		});
-	}); //EOF readfile
+				sendCommand();
+			}); //parseGcode
+		}); //EOF readfile
 }
