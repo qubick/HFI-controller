@@ -1,6 +1,10 @@
-var maxQueueSize = 50;
+//queue console log message color scheme: cyan
 
-exports.Node = function(value){
+var maxQueueSize = 25;
+var server = require('../server.js');
+// var port = server.port;
+
+var Node = function(value){
   this.data = value;
   this.next = null;
 }
@@ -28,29 +32,42 @@ exports.Queue = function(){
   }
 
   this.push = function(item){
+    var newNode = new Node(item);
+
     if(this.first === null){
-      this.first = item;
-      this.last = item;
+
+      this.first = newNode;
+      this.last = newNode;
+      console.log('[Queue]'.cyan, "first item ", item, " is saved");
     }
     else {
-      this.last.next = item;
-      this.last = this.last.next;
+      this.last.next = newNode;
+      this.last = this.last.next; //this queue does not consist of node;
+      console.log('[Queue]'.cyan, itemCnt, "th item ", item, " is saved")
     }
     itemCnt++;
+
+    while(itemCnt != 0)
+      this.printQueue(); //self run when the queue is not anymore empty
   }
 
   this.pop = function(){
-    var item = this.first.data;
+    var value = this.first.data;
     this.first = this.first.next;
 
-    return item;
+    itemCnt--;
+    return value;
   }
 
   this.printQueue = function(){
-    var temp = this.first;
-    while(temp){
-      console.log(temp.data);
-      temp = temp.next;
+    var temp;
+
+    while(!this.isEmpty()){
+      temp = this.pop();
+
+      console.log('[Queue]'.cyan, "Will send the gcode line to 3DP: ", temp);
+      console.log("server.port ", server);
+      // server.port.write(temp);
     }
-  }
+  } // EOF printQueue();
 }

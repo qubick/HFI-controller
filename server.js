@@ -25,7 +25,7 @@ var printerBehavior = '' //this should be gloabl so can be checked all the time
 var parser = require('./libs/parseGcode.js');
 // var gcodeCommandsToPrinter;
 var queue = require('./libs/queue.js');
-var gcodeQueue;
+var gcodeQueue = new queue.Queue();
 var currGcodeLineIdx = 0; //this is the latest gcode line
 
 var leapMotion = require('./libs/leapMotion.js');
@@ -48,8 +48,6 @@ app.listen(5555, () => {
 
 	if(port){
 		console.log('[Server]'.magenta, 'USB1411 opened to the 3D printer'.white);
-		exports.port = port;
-
 		port.write('G28 F1800 X Y Z \n'); //home all axis, test move
 
 	}
@@ -104,7 +102,7 @@ http.createServer((req, res) => {
 				port.write("G28 X Y Z\n"); //example: home all axis
 			}
 			else if(printerBehavior === "openFile"){
-				console.log('[Sever]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
+				console.log('[Server]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
 
 				var content;
 				var filename = './assets/' + body.commands.filename;
@@ -134,6 +132,7 @@ http.createServer((req, res) => {
 										+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
 										+ ' -s layer_height_0="0.25"'
 										+ ' -s brim_line_count="10"'
+										+ ' -s wall_line_width_x="0.4"'
 
 					// slicer settings for later
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
@@ -190,10 +189,23 @@ function sendCommand(){
 			break;
 		}
 		else {
-			console.log('[Server]'.magenta, "Sending ", cnt, "th commands to 3D printer...")
-			port.write(gcodesTo3DP[cnt]);
+			console.log('[Server]'.magenta, cnt, 'th cmd is being sent to 3DP: ', gcodesTo3DP[cnt]);
+			// port.write(gcodesTo3DP[cnt]);
+
+			if(gcodeQueue.isFull()){
+				delay(() => {
+	        gcodeQueue.push(gcodesTo3DP[cnt]);
+					// console.log('[Server]'.magenta, "queue is full; waiting 5sec...")
+	  		}, 5000);
+			}
+			else {
+				gcodeQueue.push(gcodesTo3DP[cnt]);
+			}
 		}
 	} //end forloop
+
+	// To see temporal gcode
+	fs.writeFile('./output/segmentedGcode.gcode', gcodesTo3DP.join(','));
 }
 
 
@@ -221,10 +233,8 @@ function runShellCommands(cmd1, cmd2){
 		fs.readFile("output/output.gcode", "utf8", (err, data) => {
 			if(err) throw err;
 
-			// console.log(data.blue);
 			var gcodes = data.split('\n');
 
-			//*********>>>>>>>>>>>>> this is too much of chaining... Separate this from run shell command
 			parser.parseGcode(gcodes, ()=>{
 				console.log('[Server]'.magenta, 'finish parsing gcodes from sketch generation')
 				console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
@@ -233,3 +243,14 @@ function runShellCommands(cmd1, cmd2){
 			}); //parseGcode
 		}); //EOF readfile
 }
+
+
+var delay = ( () => {
+    var timer = 0;
+    return function(callback, ms) {
+        clearTimeout (timer);
+        timer = setTimeout(callback, ms);
+    };
+})();
+
+exports.port = port;
