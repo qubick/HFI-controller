@@ -3,6 +3,8 @@
 ## To do
 - browserify main.js
 
+## How to Install
+
 1. Get the OpenCV source
 ```
 git clone https://github.com/opencv/opencv
