@@ -50,6 +50,7 @@ app.listen(5555, () => {
 		console.log('[Server]'.magenta, 'USB1411 opened to the 3D printer'.white);
 		port.write('G28 F1800 X Y Z \n'); //home all axis, test move
 
+		exports.port = port; //export when port is created
 	}
 	else {
 		console.log('[Server]'.magenta, "failed to open port".red)
@@ -252,5 +253,3 @@ var delay = ( () => {
         timer = setTimeout(callback, ms);
     };
 })();
-
-exports.port = port;
