@@ -56,7 +56,7 @@ app.listen(5555, () => {
 
 		port.on('data', (data)=>{
 			ackMsgFrom3DP = data.toString("utf8"); //this should get ok message
-			console.log("Data: ", ackMsgFrom3DP);
+			console.log('[Server]'.magenta, "Data: ", ackMsgFrom3DP);
 		})
 
 		exports.port = port; //export when port is created
@@ -84,12 +84,12 @@ http.createServer((req, res) => {
 
 	var parts = req.url.split("/");
 	var clientId = parts[2];
-  res.setHeader("Access-Control-Allow-Origin", "*");
+	res.setHeader("Access-Control-Allow-Origin", "*");
 
-  if (parts[1] === "register") {
-    clientQueues[clientId] = [];
+	if (parts[1] === "register") {
+		clientQueues[clientId] = [];
 
-  }
+	}
 
 	else if (parts[1] === "ctos") { //recieve msg from the remote user/ar-user app
 		var body = JSON.parse(decodeURIComponent(parts[3]));//, 'base64').toString('binary');
@@ -134,15 +134,15 @@ http.createServer((req, res) => {
 				var line = body.commands.script;
 
 				fs.writeFile('./output/output.jscad', line, (err)=>{
-				  if(err) return console.log(err);
+					if(err) return console.log(err);
 
 					let cmd1 = 'openjscad output/output.jscad';
 					let cmd2 = './CuraEngine/build/CuraEngine slice'
-										+ ' -j ./CuraEngine/resources/definitions/printrbot_play.def.json '
-										+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
-										+ ' -s layer_height_0="0.25"'
-										+ ' -s brim_line_count="10"'
-										+ ' -s wall_line_width_x="0.4"'
+					+ ' -j ./CuraEngine/resources/definitions/printrbot_play.def.json '
+					+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
+					+ ' -s layer_height_0="0.25"'
+					+ ' -s brim_line_count="10"'
+					+ ' -s wall_line_width_x="0.4"'
 
 					// slicer settings for later
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
@@ -154,29 +154,29 @@ http.createServer((req, res) => {
 		} // if channel's channel ID = general
 
 		Object.keys(clientQueues).forEach((otherClientId) => {
-        if (otherClientId != clientId) {
-          if (pendingResponses[otherClientId]) {
-            pendingResponses[otherClientId].end(body);
-            pendingResponses[otherClientId] = null;
-          } else
-            clientQueues[otherClientId].push(body);
-        }
-      });
+			if (otherClientId != clientId) {
+				if (pendingResponses[otherClientId]) {
+					pendingResponses[otherClientId].end(body);
+					pendingResponses[otherClientId] = null;
+				} else
+				clientQueues[otherClientId].push(body);
+			}
+		});
 
-    res.end();
+		res.end();
 
-  }
+	}
 	else if (parts[0] === "stoc") { //initiate server connection
 		if(res.setHeader("Cache-Control", "no-cache"))
 
 		if(clientQueues){
 			var item = clientQueues[clientId].shift();
-	    if(item) res.end(item);
-	    else pendingResponses[clientId] = res;
+			if(item) res.end(item);
+			else pendingResponses[clientId] = res;
 		}
-  } else {
-    res.setHeader("Content-Type", "text/html");
-  }
+	} else {
+		res.setHeader("Content-Type", "text/html");
+	}
 }).listen(5000, () => { //createServer();
 	console.log('[Server]'.magenta, 'The HTTP message channel is listening on 5000'.white);
 });
@@ -203,8 +203,8 @@ function sendCommand(){
 			// if(gcodeQueue.isFull() && ackMsgFrom3DP != ''){
 			// 	delay(() => {
 			// 		console.log('[Server]'.magenta, "queue is full; waiting 5sec...")
-	    //     gcodeQueue.push(gcodesTo3DP[cnt]);
-	  	// 	}, 5000);
+			//     gcodeQueue.push(gcodesTo3DP[cnt]);
+			// 	}, 5000);
 			// }
 			// else {
 			// 	gcodeQueue.push(gcodesTo3DP[cnt]);
@@ -219,7 +219,7 @@ function sendCommand(){
 var promise = new Promise((resolve, reject)=>{
 
 	if(ackMsgFrom3DP === 'ok') {
-			resolve("sent");
+		resolve("sent");
 	}
 	else {
 		delay(() => {
@@ -229,11 +229,11 @@ var promise = new Promise((resolve, reject)=>{
 	}
 
 	var delay = ( () => {
-	    var timer = 0;
-	    return function(callback, ms) {
-	        clearTimeout (timer);
-	        timer = setTimeout(callback, ms);
-	    };
+		var timer = 0;
+		return function(callback, ms) {
+			clearTimeout (timer);
+			timer = setTimeout(callback, ms);
+		};
 	})();
 });
 
@@ -264,16 +264,16 @@ function runShellCommands(cmd1, cmd2){
 
 	//once the 2nd cmd (run curaEngine) done, read gcode file and send to the printer queue
 	// if(child2) //as exec is execSync
-		fs.readFile("output/output.gcode", "utf8", (err, data) => {
-			if(err) throw err;
+	fs.readFile("output/output.gcode", "utf8", (err, data) => {
+		if(err) throw err;
 
-			var gcodes = data.split('\n');
+		var gcodes = data.split('\n');
 
-			parser.parseGcode(gcodes, ()=>{
-				console.log('[Server]'.magenta, 'finish parsing gcodes from sketch generation')
-				console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
+		parser.parseGcode(gcodes, ()=>{
+			console.log('[Server]'.magenta, 'finish parsing gcodes from sketch generation')
+			console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
 
-				sendCommand();
-			}); //parseGcode
-		}); //EOF readfile
+			sendCommand();
+		}); //parseGcode
+	}); //EOF readfile
 }

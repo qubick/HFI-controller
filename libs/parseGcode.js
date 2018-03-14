@@ -46,20 +46,23 @@ function parseGcode(lines, callback){
     }
     else if(line.match(/;LAYER:[0-9]+/)){
       // console.log("layer comment: ", line);
+
       currLayer = line.replace(';LAYER:', '');
       layerCnt = currLayer;
 
       var idx = i+1;
       if(lines[idx].charAt(0) === "M"){ //this is to reduce # of regEx. Only applies to the Cura sliced gcode
         idx += 1;
-        // still need to save into the integrated gcode
       }
 
       gcodeChunks = lines[idx].split(' ');
       if(gcodeChunks[4])
         z = gcodeChunks[4].substr(1);
+
+      gcodeSegments.push(line + '\n'); //restore back to the segments
     }
-    else if(line.startsWith('G1')){ // || line.startsWith('G0')){  // do only extrusion movement
+
+    if(line.startsWith('G1')){ // || line.startsWith('G0')){  // do only extrusion movement
 
       var chunk = line.split(' ');
 
@@ -95,13 +98,13 @@ function parseGcode(lines, callback){
         if(wall){
           gcodeWallMvmt.push(mvmt);
         }
-        if(skin){ //don't manipulate top/bottom covers for movement
+        if(skin){ //don't manipulate top/bottom covers for movement transformation
           gcodeSkinMvmt.push(mvmt);
-          gcodeSegments.push(line);
+          gcodeSegments.push(line + '\n');
         }
-        if(fill){
+        if(fill){ //not touching infill for now
           gcodeFillMvmt.push(mvmt);
-          gcodeSegments.push(line);
+          gcodeSegments.push(line + '\n');
         }
 
         if(gcodeWallMvmt.length > 2 ){
@@ -123,20 +126,18 @@ function parseGcode(lines, callback){
 
             let eDelta = (nextE - prevE)/interval;
 
-
             //interpolate gaps with more points to add deformation
             let prevX = ax, prevY = ay,
                 nextX, nextY;
                 eStep = prevE;
 
-            let reconstructedLine = "G1 X" + prevX + " Y" + prevY + " E" + eStep + "\n"; //to save pure gcode file
-
-            if(gcodeWallMvmt.f){
-              let flowRate = 'F' + gcodeWallMvmt.f + ' X';
-              reconstructedLine.replace('X', flowRate);
-            }
-
-            gcodeSegments.push(reconstructedLine);
+            // let reconstructedLine = "G1 X" + prevX + " Y" + prevY + " E" + eStep + "\n"; //to save pure gcode file
+            //
+            // if(gcodeWallMvmt.f){
+            //   let flowRate = 'F' + gcodeWallMvmt.f + ' X';
+            //   reconstructedLine.replace('X', flowRate);
+            // }
+            // gcodeSegments.push(reconstructedLine);
 
             while (dist > CONSTDIST){
               let theta = Math.atan(Math.abs(by-ay)/Math.abs(ax-bx));
@@ -172,7 +173,7 @@ function parseGcode(lines, callback){
         }
       } //EOF if line[0] == G1
       else { //no match with G1 mvmt or commentline(;)
-        gcodeSegments.push(line);
+        gcodeSegments.push(line + '\n');
       }
     });// EOF line.forEach()
 
