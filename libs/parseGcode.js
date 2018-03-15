@@ -178,11 +178,6 @@ function parseGcode(lines, callback){
     });// EOF line.forEach()
 
     console.log("gcode wall movement size:", gcodeWallMvmt.length);
-
-    // for(var o = 0; o <200; o++){
-    //   console.log(gcodeSegments[o]);
-    // }
-
     callback();
 } //EOF function
 

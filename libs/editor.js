@@ -10,7 +10,7 @@ animate();
 
 var loader = new THREE.STLLoader();
 
-var lineMaterial = new THREE.LineBasicMaterial({ color: 0xff00ff});
+var lineMaterial = new THREE.LineBasicMaterial({ color: 0xc0dd02});
 var slicingGeometry = new THREE.Geometry();
 
 //this is for debug purpose; draw 2d contourline from cam img process, load to preview

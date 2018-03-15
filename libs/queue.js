@@ -1,7 +1,7 @@
 //queue console log message color scheme: cyan
-
-var maxQueueSize = 25;
+var Promise = require('promise');
 var server = require('../server.js');
+const MAXQUESIZE = 25;
 // var port = server.port;
 
 var Node = function(value){
@@ -18,7 +18,7 @@ exports.Queue = function(){
   console.log('\n[Queue]'.cyan, 'An empty gcode queue is created');
 
   this.isFull = function(){
-    if(itemCnt === maxQueueSize)
+    if(itemCnt === MAXQUESIZE)
       return true;
     else
       return false;
@@ -38,7 +38,7 @@ exports.Queue = function(){
 
       this.first = newNode;
       this.last = newNode;
-      console.log('[Queue]'.cyan, "first item ", item, " is saved");
+      console.log('[Queue]'.cyan, "Queue was empty. First item is saved", item);
     }
     else {
       this.last.next = newNode;
@@ -60,14 +60,19 @@ exports.Queue = function(){
   }
 
   this.printQueue = function(){
-    var temp;
+    var temp = this.pop();
 
     while(!this.isEmpty()){
-      temp = this.pop();
 
-      console.log('[Queue]'.cyan, "Will send the gcode line to 3DP: ", temp);
-      console.log("server.port ", server);
-      // server.port.write(temp);
+      // var promise = new Promise((resolve, reject) =>{
+        if(temp.charAt[0] != (';' || ' ')) { //this is comment, pass
+          console.log('[Queue]'.cyan, "Sending gcode to 3DP: ", temp);
+
+          promise.then((result)=>{
+            console.log("message sent")
+          })
+        }
+      // })
     }
   } // EOF printQueue();
 }

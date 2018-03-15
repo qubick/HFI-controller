@@ -8,7 +8,7 @@ var channel = new Channel("general"); // this is for general communication w/ se
 var panel = new dat.GUI();
 
 var Params = function(){
-  this.gcodes = 'G28\n'
+  this.gcodes = 'M105\n' // check extruder temp as a default
   this.sendCommand = function(){
     var msgCommand = {
       msg: "directGcode"
@@ -91,10 +91,10 @@ var openFile = (event) => { //this is for preview
 
   reader.onload = function(){
 
-    // //******* tentative; this will be sent from the server line by line
-    // // var text = reader.result; //read file input result (gcode)
-    // lines = this.result.split('\n');
-    // previewGcode(lines);
+    //******* tentative; this will be sent from the server line by line
+    // var text = reader.result; //read file input result (gcode)
+    lines = this.result.split('\n');
+    previewGcode(lines);
 
     var msgCommand = {
       "msg": "openFile",
