@@ -8,6 +8,14 @@ var channel = new Channel("general"); // this is for general communication w/ se
 var panel = new dat.GUI();
 
 var Params = function(){
+  this.gcodes = 'G28\n'
+  this.sendCommand = function(){
+    var msgCommand = {
+      msg: "directGcode"
+      ,content: this.gcodes
+    }
+    channel.postMessage(msgCommand);
+  }
   this.loadFile = function(){
 
     document.getElementById('loadFileInput').click(); //bind file opener
@@ -15,10 +23,6 @@ var Params = function(){
 
   this.print = function() {
 
-    // gcodeWallMvmt.map((mvmtCmds)=>{ //map() is asynchronous
-    //   console.log("see this is asynchronous: ", mvmtCmds);
-    //   channel.postMessage(mvmtCmds); //send line by line
-    // })
     var msgCommand = {
       msg: "start"
       ,file: gcodeFileName //it's determined at fileLoader in gcodeparser
@@ -32,20 +36,20 @@ var Params = function(){
 
 
   //this is for debug to see if contourline is self-intersecting
-  this.see2DPath = function(){
-
-    console.log('Check if lines are self-intersecting...')
-
-    curveFromCam.forEach((polyVertex) => {
-      console.log('x: ', polyVertex.x*10, 'y: ', polyVertex.y*10);
-      contourLineGeometry.vertices.push(new THREE.Vector3(polyVertex.x*100, polyVertex.y*100, 0)); //since our grid is at (0, -100)
-    });
-
-    var path2D = new THREE.Line(slicingGeometry, lineMaterial);
-    scene.add(path2D);
-    render();
-
-  }
+  // this.see2DPath = function(){
+  //
+  //   console.log('Check if lines are self-intersecting...')
+  //
+  //   curveFromCam.forEach((polyVertex) => {
+  //     console.log('x: ', polyVertex.x*10, 'y: ', polyVertex.y*10);
+  //     contourLineGeometry.vertices.push(new THREE.Vector3(polyVertex.x*100, polyVertex.y*100, 0)); //since our grid is at (0, -100)
+  //   });
+  //
+  //   var path2D = new THREE.Line(slicingGeometry, lineMaterial);
+  //   scene.add(path2D);
+  //   render();
+  //
+  // }
 
   this.export = function(){
     console.log("export stl")
@@ -58,6 +62,7 @@ var Params = function(){
 function createPanel(){
   //file upload
   var params = new Params();
+
   panel.add(params, 'loadFile').name('Load 3D Model');
   panel.add(params, 'print').name('Start printing'); //this is now connected to the spiralization
   // panel.add(params, 'see2DPath').name('See contourline from image');
@@ -69,6 +74,8 @@ function createPanel(){
   //   scene.add(line3D);
   //
   }); //get the layer number from gcode reader
+  panel.add(params, 'gcodes').name('Gcodes');
+  panel.add(params, 'sendCommand').name('Send Gcodes Directly');
 }
 
 function removePanel(){

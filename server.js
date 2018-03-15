@@ -10,6 +10,7 @@ var fs = require("fs");
 var http = require("http");
 var exec = require('child_process').execSync, child1, child2; //ensure asynchronous
 var colors = require('colors');
+var sync = require('synchronize');
 
 //for serial connection with the printer
 var SerialPort = require("serialport");
@@ -102,6 +103,12 @@ http.createServer((req, res) => {
 			if(printerBehavior === "start"){
 				console.log('[Server]'.magenta, "Start: run cmd sender queue");
 			}
+			else if(printerBehavior === "directGcode"){
+
+				let gcodeLine = body.commands.content;
+				console.log('[Server]'.magenta, "Send Gcode: ", gcodeLine);
+				port.write(gcodeLine + '\n');
+			}
 			else if(printerBehavior === "printing"){
 				console.log('[Server]'.magenta, "Printing: restore paused position && resume sending queue")
 				// port.write("G0 X10 F1800\n"); //example pos to return back
@@ -114,13 +121,13 @@ http.createServer((req, res) => {
 			else if(printerBehavior === "openFile"){
 				console.log('[Server]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
 
-				var content;
-				var filename = './assets/' + body.commands.filename;
+				let content;
+				let filename = './assets/' + body.commands.filename;
 
 				fs.readFile(filename, "utf8", function read(err, data){
 					if(err) throw err;
 					content = data;
-					var gcodes = data.split('\n');
+					let gcodes = data.split('\n');
 
 					parser.parseGcode(gcodes, ()=>{
 
@@ -211,31 +218,56 @@ function sendCommand(){
 			// }
 			console.log('[Server]'.magenta, "writing commands: ", gcodesTo3DP[cnt]);
 			port.write(gcodesTo3DP[cnt]);
-			// promise.then(port.write(gcodesTo3DP[cnt]));
+			let P = myAsyncFunc(gcodesTo3DP[cnt]);
+				if(ackMsgFrom3DP === 'ok'){
+					port.write(gcodesTo3DP[cnt]);
+					ackMsgFrom3DP = '';
+				} else {
+					console.log("wait for 5sec to get 'ok'")
+					setTimeout(()=>{
+						;
+					}, 5000); // if not 'ok', wait for 5000
+				}
 		}
 	}
 }
 
-var promise = new Promise((resolve, reject)=>{
+function myAsyncFunc(cmd){
+	return new Promise((resolve, reject)=>{
+		// port.write(cmd);
 
-	if(ackMsgFrom3DP === 'ok') {
-		resolve("sent");
-	}
-	else {
-		delay(() => {
-			console.log('[Server]'.magenta, "wating until 'ok' msg recieved")
-		}, 5000);
-		reject("retry to send")
-	}
-
-	var delay = ( () => {
-		var timer = 0;
-		return function(callback, ms) {
-			clearTimeout (timer);
-			timer = setTimeout(callback, ms);
-		};
-	})();
-});
+		if (ackMsgFrom3DP === 'ok') {
+			resolve();
+			ackMsgFrom3DP = ''
+		}
+		else {
+			console.log("wait for 5sec to get 'ok'")
+			setTimeout(()=>{
+				;
+			}, 5000); // if not 'ok', wait for 5000
+		}
+	})
+}
+// var promise = new Promise((resolve, reject)=>{
+//
+// 	if(ackMsgFrom3DP === 'ok') {
+// 		resolve("sent");
+// 	}
+// 	else {
+// 		delay(() => {
+// 			console.log('[Server]'.magenta, "wating until 'ok' msg recieved")
+// 		}, 5000);
+// 		reject("retry to send")
+// 	}
+//
+// 	var delay = ( () => {
+// 		var timer = 0;
+// 		return function(callback, ms) {
+// 			clearTimeout (timer);
+// 			timer = setTimeout(callback, ms);
+// 		};
+// 	})();
+// });
 
 // function writeMsgTo3DP(cmd){
 // 	port.write(cmd, (err)=>{
