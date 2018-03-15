@@ -3,6 +3,8 @@
 ## To do
 - browserify main.js
 
+## How to Install
+
 1. Get the OpenCV source
 ```
 git clone https://github.com/opencv/opencv
@@ -33,6 +35,14 @@ python ./platforms/js/build_js.py build_js
 6. Install OpenJSCAD commanline tool
 [OpenJSCAD](https://en.wikibooks.org/wiki/OpenJSCAD_User_Guide#Local_Installation_via_NPM)
 
+7. Install all npm/node dependencies by
+```
+npm install
+```
+
+## Trouble Shooting
+If you get `permission denied` message when installing any npm modules, follow the instrunction
+https://docs.npmjs.com/getting-started/fixing-npm-permissions
 
 ## Reference
 * [OpenCV js](https://docs.opencv.org/trunk/d2/df0/tutorial_js_table_of_contents_imgproc.html)
