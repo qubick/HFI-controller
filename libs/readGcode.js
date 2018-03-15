@@ -16,38 +16,12 @@ var layerCnt = 0, currLayer = 0;
 
 var skin = false, wall = false, fill = false;
 
+function previewGcode(lines){
 
-var openFile = (event) => { //this is for preview
-
-  var input = event.target;
-  var reader = new FileReader();
-  gcodeFileName = event.srcElement.files[0].name;
-
-  reader.onload = function(){
-    // var text = reader.result; //read file input result (gcode)
-    // // var node = document.getElementById('output');
-    // // node.innerText = text;
-    //
-    // do this at the server side
-    // lines = this.result.split('\n');
-    // parseGcode(lines);
-    var msgCommand = {
-      "msg": "openFile",
-      "filename": gcodeFileName
-    }
-
-    channel.postMessage(msgCommand);
-  }; //EOF onload()
-  reader.readAsText(input.files[0]);
-}
-
-
-//maybe do this from serverside?
-function parseGcode(lines){
-
+  console.log("previewing gcode...")
   var z = 0; //base height
   lines.forEach((line, i) => {
-
+    
     if(line.match(/;TYPE:WALL-OUTER/ || /;TYPE:WALL-INNER/)){
       wall = true;
       skin = false;
@@ -75,13 +49,6 @@ function parseGcode(lines){
       if(gcodeChunks[4])
         z = gcodeChunks[4].substr(1);
     }
-
-    //this is common for any type of slicer
-    // var zMove = line.match(/Z\d+.\d/);
-    //
-    // if(zMove){ //otherwise keep the latest z-height
-    //   z = zMove[0].substr(1);
-    // }
 
     if(line.startsWith('G1')){ // || line.startsWith('G0')){  // do only extrusion movement
 

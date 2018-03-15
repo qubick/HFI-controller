@@ -25,7 +25,7 @@ var printerBehavior = '' //this should be gloabl so can be checked all the time
 
 // for gcodemovments
 var parser = require('./libs/parseGcode.js');
-// var gcodeCommandsToPrinter;
+var gcodeFilename = ''; //will load filename when file opened from the client
 var queue = require('./libs/queue.js');
 var gcodeQueue = new queue.Queue();
 var currGcodeLineIdx = 0; //this is the latest gcode line
@@ -52,12 +52,11 @@ app.listen(5555, () => {
 		console.log('[Server]'.magenta, 'USB1411 opened to the 3D printer');
 		port.write('G28 F1800 X Y Z \n', (err) => { //home all axis, test move
 			if (err) return console.log("Error on initiating the port")
-			console.log("message written");
 		});
 
 		port.on('data', (data)=>{
 			ackMsgFrom3DP = data.toString("utf8"); //this should get ok message
-			console.log('[Server]'.magenta, "Data: ", ackMsgFrom3DP);
+			console.log('[Server]'.magenta, "Printer ACK: ", ackMsgFrom3DP);
 		})
 
 		exports.port = port; //export when port is created
@@ -102,6 +101,20 @@ http.createServer((req, res) => {
 
 			if(printerBehavior === "start"){
 				console.log('[Server]'.magenta, "Start: run cmd sender queue");
+				let content;
+
+				fs.readFile(gcodeFilename, "utf8", function read(err, data){
+					if(err) throw err;
+					content = data;
+					let gcodes = data.split('\n');
+
+					parser.parseGcode(gcodes, ()=>{
+
+						//when gcodes is done for parsing;
+						console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
+						sendCommand();
+					});
+				});
 			}
 			else if(printerBehavior === "directGcode"){
 
@@ -111,8 +124,7 @@ http.createServer((req, res) => {
 			}
 			else if(printerBehavior === "printing"){
 				console.log('[Server]'.magenta, "Printing: restore paused position && resume sending queue")
-				// port.write("G0 X10 F1800\n"); //example pos to return back
-				// port.write("G0 Y10\n");
+
 			}
 			else if(printerBehavior === "paused"){
 				console.log('[Server]'.magenta, "Paused: store curr position && home all axis ")
@@ -121,21 +133,8 @@ http.createServer((req, res) => {
 			else if(printerBehavior === "openFile"){
 				console.log('[Server]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
 
-				let content;
-				let filename = './assets/' + body.commands.filename;
+				gcodeFilename = './assets/' + body.commands.filename;
 
-				fs.readFile(filename, "utf8", function read(err, data){
-					if(err) throw err;
-					content = data;
-					let gcodes = data.split('\n');
-
-					parser.parseGcode(gcodes, ()=>{
-
-						//when gcodes is done for parsing;
-						console.log('[Sever]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
-						sendCommand();
-					}); //parseGcode
-				});
 			}
 			else if(printerBehavior === "createGcode"){ //create a openjscad file from geometry,
 				var line = body.commands.script;
@@ -145,11 +144,11 @@ http.createServer((req, res) => {
 
 					let cmd1 = 'openjscad output/output.jscad';
 					let cmd2 = './CuraEngine/build/CuraEngine slice'
-					+ ' -j ./CuraEngine/resources/definitions/printrbot_play.def.json '
-					+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
-					+ ' -s layer_height_0="0.25"'
-					+ ' -s brim_line_count="10"'
-					+ ' -s wall_line_width_x="0.4"'
+								+ ' -j ./CuraEngine/resources/definitions/printrbot_play.def.json '
+								+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
+								+ ' -s layer_height_0="0.25"'
+								+ ' -s brim_line_count="10"'
+								+ ' -s wall_line_width_x="0.4"'
 
 					// slicer settings for later
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
@@ -190,11 +189,8 @@ http.createServer((req, res) => {
 
 function sendCommand(){
 
-	console.log('[Server]'.magenta, "Sending pre-read gcodes....");
-
 	// 2. read existing gcode file >> save in the queue
 	var gcodesTo3DP = parser.gcodeSegments;
-
 	for(let cnt=currGcodeLineIdx; cnt<gcodesTo3DP.length; cnt++){
 
 		if(printerBehavior === "paused"){ //always check if this is true << should this be an interrupt??
@@ -207,73 +203,38 @@ function sendCommand(){
 			break;
 		}
 		else {
-			// if(gcodeQueue.isFull() && ackMsgFrom3DP != ''){
-			// 	delay(() => {
-			// 		console.log('[Server]'.magenta, "queue is full; waiting 5sec...")
-			//     gcodeQueue.push(gcodesTo3DP[cnt]);
-			// 	}, 5000);
-			// }
-			// else {
-			// 	gcodeQueue.push(gcodesTo3DP[cnt]);
-			// }
-			console.log('[Server]'.magenta, "writing commands: ", gcodesTo3DP[cnt]);
-			port.write(gcodesTo3DP[cnt]);
-			let P = myAsyncFunc(gcodesTo3DP[cnt]);
-				if(ackMsgFrom3DP === 'ok'){
-					port.write(gcodesTo3DP[cnt]);
-					ackMsgFrom3DP = '';
-				} else {
-					console.log("wait for 5sec to get 'ok'")
-					setTimeout(()=>{
-						;
-					}, 5000); // if not 'ok', wait for 5000
-				}
+			if(gcodeQueue.isFull() && ackMsgFrom3DP != ''){
+				delay(() => {
+					console.log('[Server]'.magenta, "queue is full; waiting 5sec...")
+			    gcodeQueue.push(gcodesTo3DP[cnt]);
+				}, 5000);
+			}
+			else {
+				gcodeQueue.push(gcodesTo3DP[cnt]);
+			}
 		}
 	}
 }
 
-function myAsyncFunc(cmd){
+function send(cmd){
+	// var ack;
 	return new Promise((resolve, reject)=>{
-		// port.write(cmd);
+		// port.on('receive', (data)=>{
+		// 	console.log('Data in send(cmd) func: ', data.toString('utf8'));
+		// 	// ack = port.read();
+		// });
+		console.log('[Server]'.magenta, "in send() func, ack: ", ackMsgFrom3DP, "cmd: ", cmd);
 
-		if (ackMsgFrom3DP === 'ok') {
-			resolve();
-			ackMsgFrom3DP = ''
-		}
-		else {
-			console.log("wait for 5sec to get 'ok'")
-			setTimeout(()=>{
-				;
-			}, 5000); // if not 'ok', wait for 5000
-		}
-	})
+		// if(ackMsgFrom3DP === 'ok'){
+		// 	port.write(cmd, (err)=>{
+		// 		if(err) reject("rejected")
+		// 		resolve("resolved")
+		// 	});
+		// }
+		port.on('recieve', resolve);
+		port.write(cmd);
+	});
 }
-// var promise = new Promise((resolve, reject)=>{
-//
-// 	if(ackMsgFrom3DP === 'ok') {
-// 		resolve("sent");
-// 	}
-// 	else {
-// 		delay(() => {
-// 			console.log('[Server]'.magenta, "wating until 'ok' msg recieved")
-// 		}, 5000);
-// 		reject("retry to send")
-// 	}
-//
-// 	var delay = ( () => {
-// 		var timer = 0;
-// 		return function(callback, ms) {
-// 			clearTimeout (timer);
-// 			timer = setTimeout(callback, ms);
-// 		};
-// 	})();
-// });
-
-// function writeMsgTo3DP(cmd){
-// 	port.write(cmd, (err)=>{
-// 		if(err) console.log("Failed to write on Serial port");
-// 	})
-// }
 
 function runShellCommands(cmd1, cmd2){
 

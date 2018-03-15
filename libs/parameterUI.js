@@ -25,8 +25,9 @@ var Params = function(){
 
     var msgCommand = {
       msg: "start"
-      ,file: gcodeFileName //it's determined at fileLoader in gcodeparser
+      ,filename: gcodeFileName //it's determined at fileLoader in gcodeparser
     }
+
     channel.postMessage(msgCommand); //this is bulk send
 
     channel.onmessage = function(evt){
@@ -36,20 +37,20 @@ var Params = function(){
 
 
   //this is for debug to see if contourline is self-intersecting
-  // this.see2DPath = function(){
-  //
-  //   console.log('Check if lines are self-intersecting...')
-  //
-  //   curveFromCam.forEach((polyVertex) => {
-  //     console.log('x: ', polyVertex.x*10, 'y: ', polyVertex.y*10);
-  //     contourLineGeometry.vertices.push(new THREE.Vector3(polyVertex.x*100, polyVertex.y*100, 0)); //since our grid is at (0, -100)
-  //   });
-  //
-  //   var path2D = new THREE.Line(slicingGeometry, lineMaterial);
-  //   scene.add(path2D);
-  //   render();
-  //
-  // }
+  this.see2DPath = function(){
+
+    console.log('Check if lines are self-intersecting...')
+
+    curveFromCam.forEach((polyVertex) => {
+      console.log('x: ', polyVertex.x*10, 'y: ', polyVertex.y*10);
+      contourLineGeometry.vertices.push(new THREE.Vector3(polyVertex.x*100, polyVertex.y*100, 0)); //since our grid is at (0, -100)
+    });
+
+    var path2D = new THREE.Line(slicingGeometry, lineMaterial);
+    scene.add(path2D);
+    render();
+
+  }
 
   this.export = function(){
     console.log("export stl")
@@ -80,4 +81,27 @@ function createPanel(){
 
 function removePanel(){
   delete topBoxUI;
+}
+
+var openFile = (event) => { //this is for preview
+
+  var input = event.target;
+  var reader = new FileReader();
+  gcodeFileName = event.srcElement.files[0].name;
+
+  reader.onload = function(){
+
+    // //******* tentative; this will be sent from the server line by line
+    // // var text = reader.result; //read file input result (gcode)
+    // lines = this.result.split('\n');
+    // previewGcode(lines);
+
+    var msgCommand = {
+      "msg": "openFile",
+      "filename": gcodeFileName
+    }
+
+    channel.postMessage(msgCommand);
+  }; //EOF onload()
+  reader.readAsText(input.files[0]);
 }
