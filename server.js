@@ -203,15 +203,6 @@ async function SendCommand(){
 			break;
 		}
 		else {
-			// if(gcodeQueue.isFull() && ackMsgFrom3DP != ''){
-			// 	delay(() => {
-			// 		console.log('[Server]'.magenta, "queue is full; waiting 5sec...")
-			//     gcodeQueue.push(gcodesTo3DP[cnt]);
-			// 	}, 5000);
-			// }
-			// else {
-			// 	gcodeQueue.push(gcodesTo3DP[cnt]);
-			// }
 			await WriteGcodeTo3DP(gcodesTo3DP[cnt]);
 		}
 	}
@@ -220,14 +211,28 @@ async function SendCommand(){
 function WriteGcodeTo3DP(cmd){
 	// var ack;
 	return new Promise((resolve, reject)=>{
-		console.log('[Server]'.magenta, "in send() func, ack: ", ackMsgFrom3DP, "cmd: ", cmd);
+		console.log("in send() func sending cmd: ", cmd);
 
-		// port.on('recieve', resolve);
-		console.log("port ready: ", port.read());
+		port.on('readable', () => {
+		   var ret = ''
+		   while (ret != 'ok'){
+				 ret = port.read();
+				 console.log('[Server]'.magenta, "in polling loop: ", ret);
+				 delay(10);
+			 }
+		});
+
 		port.write(cmd, resolve);
 	});
 }
 
+var delay = ( () => {
+    var timer = 0;
+    return function(callback, ms) {
+        clearTimeout (timer);
+        timer = setTimeout(callback, ms);
+    };
+})();
 
 function RunShellCommands(cmd1, cmd2){
 
