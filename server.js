@@ -54,8 +54,8 @@ app.listen(5555, () => {
 			if (err) return console.log("Error on initiating the port")
 		});
 
-		port.on('data', (data)=>{
-			ackMsgFrom3DP = data.toString("utf8"); //this should get ok message
+		port.on('readable', ()=>{
+			ackMsgFrom3DP = port.read().toString('utf8'); //data.toString("utf8"); //this should get ok message
 			console.log('[Server]'.magenta, "Printer ACK: ", ackMsgFrom3DP);
 		})
 
@@ -112,7 +112,7 @@ http.createServer((req, res) => {
 
 						//when gcodes is done for parsing;
 						console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
-						sendCommand();
+						SendCommand();
 					});
 				});
 			}
@@ -154,7 +154,7 @@ http.createServer((req, res) => {
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
 					// cmd2 += '-s speed_print_layer_0="10" -s speed_wall_x="10" -s speed_topbottom="30"'
 
-					runShellCommands(cmd1, cmd2);
+					RunShellCommands(cmd1, cmd2);
 				});
 			}
 		} // if channel's channel ID = general
@@ -187,7 +187,7 @@ http.createServer((req, res) => {
 	console.log('[Server]'.magenta, 'The HTTP message channel is listening on 5000'.white);
 });
 
-function sendCommand(){
+async function SendCommand(){
 
 	// 2. read existing gcode file >> save in the queue
 	var gcodesTo3DP = parser.gcodeSegments;
@@ -203,40 +203,33 @@ function sendCommand(){
 			break;
 		}
 		else {
-			if(gcodeQueue.isFull() && ackMsgFrom3DP != ''){
-				delay(() => {
-					console.log('[Server]'.magenta, "queue is full; waiting 5sec...")
-			    gcodeQueue.push(gcodesTo3DP[cnt]);
-				}, 5000);
-			}
-			else {
-				gcodeQueue.push(gcodesTo3DP[cnt]);
-			}
+			// if(gcodeQueue.isFull() && ackMsgFrom3DP != ''){
+			// 	delay(() => {
+			// 		console.log('[Server]'.magenta, "queue is full; waiting 5sec...")
+			//     gcodeQueue.push(gcodesTo3DP[cnt]);
+			// 	}, 5000);
+			// }
+			// else {
+			// 	gcodeQueue.push(gcodesTo3DP[cnt]);
+			// }
+			await WriteGcodeTo3DP(gcodesTo3DP[cnt]);
 		}
 	}
 }
 
-function send(cmd){
+function WriteGcodeTo3DP(cmd){
 	// var ack;
 	return new Promise((resolve, reject)=>{
-		// port.on('receive', (data)=>{
-		// 	console.log('Data in send(cmd) func: ', data.toString('utf8'));
-		// 	// ack = port.read();
-		// });
 		console.log('[Server]'.magenta, "in send() func, ack: ", ackMsgFrom3DP, "cmd: ", cmd);
 
-		// if(ackMsgFrom3DP === 'ok'){
-		// 	port.write(cmd, (err)=>{
-		// 		if(err) reject("rejected")
-		// 		resolve("resolved")
-		// 	});
-		// }
-		port.on('recieve', resolve);
-		port.write(cmd);
+		// port.on('recieve', resolve);
+		console.log("port ready: ", port.read());
+		port.write(cmd, resolve);
 	});
 }
 
-function runShellCommands(cmd1, cmd2){
+
+function RunShellCommands(cmd1, cmd2){
 
 	console.log("[Server]".magenta, "run openjscand to generate STL from polygons")
 	child1 = exec(cmd1, (err, stdout, stderr)=>{
@@ -266,7 +259,7 @@ function runShellCommands(cmd1, cmd2){
 			console.log('[Server]'.magenta, 'finish parsing gcodes from sketch generation')
 			console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
 
-			sendCommand();
+			SendCommand();
 		}); //parseGcode
 	}); //EOF readfile
 }
