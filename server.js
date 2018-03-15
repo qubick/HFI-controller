@@ -49,7 +49,7 @@ app.listen(5555, () => {
 	leapMotion.leapMotion();
 
 	if(port){
-		console.log('[Server]'.magenta, 'USB1411 opened to the 3D printer');
+		console.log('[Server]'.magenta, 'Serial:USB1411 opened to the 3D printer');
 		port.write('G28 F1800 X Y Z \n', (err) => { //home all axis, test move
 			if (err) return console.log("Error on initiating the port")
 		});
@@ -102,6 +102,7 @@ http.createServer((req, res) => {
 			if(printerBehavior === "start"){
 				console.log('[Server]'.magenta, "Start: run cmd sender queue");
 				let content;
+				gcodeFilename = './assets/' + body.commands.filename;
 
 				fs.readFile(gcodeFilename, "utf8", function read(err, data){
 					if(err) throw err;
@@ -124,18 +125,16 @@ http.createServer((req, res) => {
 			}
 			else if(printerBehavior === "printing"){
 				console.log('[Server]'.magenta, "Printing: restore paused position && resume sending queue")
-
+				SendCommand(); //resume sendcommand again, but it will start to send from the latest line of gcode
 			}
 			else if(printerBehavior === "paused"){
-				console.log('[Server]'.magenta, "Paused: store curr position && home all axis ")
-				port.write("G28 X Y Z\n"); //example: home all axis
+				console.log('[Server]'.magenta, "Paused: store curr position && home x y axis ")
+				// port.write("G28 X Y\n"); //example: home all axis
+				port.write("M226\n"); //pause
 			}
-			else if(printerBehavior === "openFile"){
-				console.log('[Server]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
-
-				gcodeFilename = './assets/' + body.commands.filename;
-
-			}
+			// else if(printerBehavior === "openFile"){
+			// 	console.log('[Server]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
+			// }
 			else if(printerBehavior === "createGcode"){ //create a openjscad file from geometry,
 				var line = body.commands.script;
 
@@ -188,18 +187,21 @@ http.createServer((req, res) => {
 });
 
 async function SendCommand(){
+	console.log('[Server]'.magenta, "Will send gcode from line: ", currGcodeLineIdx);
 
-	// 2. read existing gcode file >> save in the queue
 	var gcodesTo3DP = parser.gcodeSegments;
+
+	fs.writeFile('interpolatedPoints.gcode', gcodesTo3DP.join(','));
 	for(let cnt=currGcodeLineIdx; cnt<gcodesTo3DP.length; cnt++){
 
 		if(printerBehavior === "paused"){ //always check if this is true << should this be an interrupt??
 			console.log("will stop the machine");
-			port.write("G28 X Y Z\n", (err)=>{
+			port.write("G28 X Y\n", (err)=>{
 				// do something
 			});
 
 			currGcodeLineIdx = cnt;
+			console.log("will stop to send gcdoe at: ", cnt);
 			break;
 		}
 		else {
@@ -211,13 +213,13 @@ async function SendCommand(){
 function WriteGcodeTo3DP(cmd){
 	// var ack;
 	return new Promise((resolve, reject)=>{
-		console.log("in send() func sending cmd: ", cmd);
+		console.log('[Server]'.magenta, "in send() func sending cmd: ", cmd);
 
-		port.on('readable', () => {
+		port.on('readable', () => { //polling
 		   var ret = ''
 		   while (ret != 'ok'){
-				 ret = port.read();
-				 console.log('[Server]'.magenta, "in polling loop: ", ret);
+				 ret = port.read(); //it returns null immediately
+				 console.log('[Server]'.magenta, "in polling loop, printer msg: ", ret);
 				 delay(10);
 			 }
 		});
