@@ -24,9 +24,10 @@ var reqIdx = 0;
 var printerBehavior = '' //this should be gloabl so can be checked all the time
 
 // for gcodemovments
-var parser = require('./libs/parseGcode.js');
+var parser		= require('./libs/parseGcode.js');
+var transform	= require('./libs/transformLayer.js');
 var gcodeFilename = ''; //will load filename when file opened from the client
-var queue = require('./libs/queue.js');
+var queue			= require('./libs/queue.js');
 var gcodeQueue = new queue.Queue();
 var currGcodeLineIdx = 0; //this is the latest gcode line
 
@@ -102,7 +103,6 @@ http.createServer((req, res) => {
 			if(printerBehavior === "start"){
 				console.log('[Server]'.magenta, "Start: run cmd sender queue");
 				let content;
-				gcodeFilename = './assets/' + body.commands.filename;
 
 				fs.readFile(gcodeFilename, "utf8", function read(err, data){
 					if(err) throw err;
@@ -115,6 +115,10 @@ http.createServer((req, res) => {
 						console.log('[Server]'.magenta, 'gcodeSegments length: ', parser.gcodeSegments.length);
 						SendCommand();
 					});
+
+					//apply transformation matrix if there is any intervention for desgin
+					var transformType = "rotate";
+					transform.ApplyTransformation(transformType);
 				});
 			}
 			else if(printerBehavior === "directGcode"){
@@ -132,9 +136,13 @@ http.createServer((req, res) => {
 				// port.write("G28 X Y\n"); //example: home all axis
 				port.write("M226\n"); //pause
 			}
-			// else if(printerBehavior === "openFile"){
-			// 	console.log('[Server]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
-			// }
+			else if(printerBehavior === "openFile"){
+				console.log('[Server]'.magenta, 'OpenFile: open the gcode/stl file ', body.commands.filename, ' to interpret gcode');
+				gcodeFilename = './assets/' + body.commands.filename;
+
+				// if(gcodeFilename.match())
+				//if stl -> call cura go get test.gcode
+			}
 			else if(printerBehavior === "createGcode"){ //create a openjscad file from geometry,
 				var line = body.commands.script;
 
@@ -143,11 +151,12 @@ http.createServer((req, res) => {
 
 					let cmd1 = 'openjscad output/output.jscad';
 					let cmd2 = './CuraEngine/build/CuraEngine slice'
-								+ ' -j ./CuraEngine/resources/definitions/printrbot_play.def.json '
-								+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
-								+ ' -s layer_height_0="0.25"'
-								+ ' -s brim_line_count="10"'
-								+ ' -s wall_line_width_x="0.4"'
+									+ ' -j ./CuraEngine/resources/definitions/printrbot_play.def.json '
+									+ ' -e0 -l "output/output.stl" -o "output/output.gcode"'
+									+ ' -s model_position_z="500"' //set to large values, so area below the model will be removed when slicing
+									+ ' -s layer_height_0="0.25"'
+									+ ' -s brim_line_count="10"'
+									+ ' -s wall_line_width_x="0.4"'
 
 					// slicer settings for later
 					// cmd2 += '-s default_material_print_temperature="230" -s material_print_temperature="230" material_print_temperature_layer_0="215" ' //temp settings
@@ -191,13 +200,13 @@ async function SendCommand(){
 
 	var gcodesTo3DP = parser.gcodeSegments;
 
-	fs.writeFile('interpolatedPoints.gcode', gcodesTo3DP.join(','));
+	// fs.writeFile('interpolatedPoints.gcode', gcodesTo3DP.join(','));
 	for(let cnt=currGcodeLineIdx; cnt<gcodesTo3DP.length; cnt++){
 
 		if(printerBehavior === "paused"){ //always check if this is true << should this be an interrupt??
 			console.log("will stop the machine");
 			port.write("G28 X Y\n", (err)=>{
-				// do something
+				// do something with triggered design interaction
 			});
 
 			currGcodeLineIdx = cnt;
@@ -213,13 +222,13 @@ async function SendCommand(){
 function WriteGcodeTo3DP(cmd){
 	// var ack;
 	return new Promise((resolve, reject)=>{
-		console.log('[Server]'.magenta, "in send() func sending cmd: ", cmd);
+		console.log('[Server]'.magenta, "In send() func, sending cmd: ", cmd);
 
 		port.on('readable', () => { //polling
 		   var ret = ''
 		   while (ret != 'ok'){
 				 ret = port.read(); //it returns null immediately
-				 console.log('[Server]'.magenta, "in polling loop, printer msg: ", ret);
+				 console.log('[Server]'.magenta, "In polling loop, printer msg: ", ret);
 				 delay(10);
 			 }
 		});
