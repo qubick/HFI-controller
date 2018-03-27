@@ -87,22 +87,25 @@ function parseGcode(lines, callback){
         mvmt = {
           "l" : currLayer
           , "f" : f
-          , "x" : x
-          , "y" : y
-          // , "z" : z
+          , pos : {"x" : x
+                  , "y" : y}
+          , "z" : z
           , "e" : e
         }
         // let reconstructedLine = "G1 X" + prevX + " Y" + prevY + " E" + e;
         // gcodeSegments.push(reconstructedLine);
 
         if(wall){
+          mvmt.type = "wall";
           gcodeWallMvmt.push(mvmt);
         }
         if(skin){ //don't manipulate top/bottom covers for movement transformation
+          mvmt.type = "skin";
           gcodeSkinMvmt.push(mvmt);
           gcodeSegments.push(line + '\n');
         }
         if(fill){ //not touching infill for now
+          mvmt.type = "fill";
           gcodeFillMvmt.push(mvmt);
           gcodeSegments.push(line + '\n');
         }
@@ -110,7 +113,7 @@ function parseGcode(lines, callback){
         if(gcodeWallMvmt.length > 2 ){
           let len = gcodeWallMvmt.length - 1;
 
-          if(gcodeWallMvmt[len].l === gcodeWallMvmt[len-1].l){ //else >> no dist btw layers
+          if(gcodeWallMvmt[len].l === gcodeWallMvmt[len-1].l){ //else >> no interpolation btw layers
 
             // to interpolate movement
             let ax = parseFloat(gcodeWallMvmt[len-1].x);
@@ -158,9 +161,9 @@ function parseGcode(lines, callback){
               //add new discrete pts to the array
               mvmt = {
                 "l" : currLayer
-                , "x" : prevX
-                , "y" : prevY
-                // , "z" : z
+                , pos: {"x" : prevX
+                        , "y" : prevY}
+                , "z" : z
                 , "e" : eStep
                 //need to decide how to get the flowrate? (e-stepper motor speed)
               }
