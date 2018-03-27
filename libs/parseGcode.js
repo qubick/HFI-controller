@@ -131,13 +131,13 @@ function parseGcode(lines, callback){
                 nextX, nextY;
                 eStep = prevE;
 
-            // let reconstructedLine = "G1 X" + prevX + " Y" + prevY + " E" + eStep + "\n"; //to save pure gcode file
-            //
-            // if(gcodeWallMvmt.f){
-            //   let flowRate = 'F' + gcodeWallMvmt.f + ' X';
-            //   reconstructedLine.replace('X', flowRate);
-            // }
-            // gcodeSegments.push(reconstructedLine);
+            let reconstructedLine = "G1 X" + prevX + " Y" + prevY + " E" + eStep + "\n"; //to save pure gcode file
+
+            if(gcodeWallMvmt.f){
+              let flowRate = 'F' + gcodeWallMvmt.f + ' X';
+              reconstructedLine.replace('X', flowRate);
+            }
+            gcodeSegments.push(reconstructedLine);
 
             while (dist > CONSTDIST){
               let theta = Math.atan(Math.abs(by-ay)/Math.abs(ax-bx));

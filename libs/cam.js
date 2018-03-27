@@ -1,10 +1,11 @@
+//this is client side (browser) functions
 var capturedImgOjects = [];
 var pausedPrint = false;
 
 var capturedforExtraction = false;
 var extrusionCnt = 1; //intervention count
 
-//common vars for CV
+//common variables for CV
 var mask = new cv.Mat();
 var dst = new cv.Mat(); //subtraction destination
 var dtype = -1;
@@ -461,4 +462,17 @@ function ExtractSketchContextBased(){
 function getExtrudeHeight(){
   extHeight = document.getElementById('extrudeHeightInput').value;
   console.log("extrusion height: ", extHeight)
+}
+
+
+function TransformModel(){
+  let clickedBtnID = window.event.target.id;
+  clickedBtnID = clickedBtnID.substring(0, clickedBtnID.length-3); //get rid of "Btn"
+  console.log("clicked btn: ", clickedBtnID);
+
+  var msg = {
+    msg: clickedBtnID
+  };
+
+  channel.postMessage(msg);
 }

@@ -49,13 +49,20 @@
 					<input type=text value="5" id="extrudeHeightInput">
 					<br/>
 					<!-- <input type=button value="Set height" onclick="getExtrudeHeight()" id="submitHeight"> -->
-					Capture cam image to:
-					<input type=button value="Simple extrude" onclick="captureToExtractSketch()"	id="extrudeBtn">
-					<input type=button value="Create holes" onclick="captureToExtractSketch()"		id="holesBtn">
-					<input type=button value="Create dent" onclick="captureToExtractSketch()"			id="dentBtn">
-					<input type=button value="Scaling extrude" onclick="captureToExtractSketch()"	id="scaleBtn">
-					<input type=button value="Revolve" onclick="captureToExtractSketch()"					id="revolveBtn">
-					<input type=button value="Twist extrude" onclick="captureToExtractSketch()"		id="twistBtn">
+					Model by CaptureImage:
+					<input type=button value="Simple extrude" onclick="CaptureToExtractSketch()"	id="extrudeBtn">
+					<input type=button value="Create holes" onclick="CaptureToExtractSketch()"		id="holesBtn">
+					<input type=button value="Create dent" onclick="CaptureToExtractSketch()"			id="dentBtn">
+					<input type=button value="Scaling extrude" onclick="CaptureToExtractSketch()"	id="scaleBtn">
+					<input type=button value="Revolve" onclick="CaptureToExtractSketch()"					id="revolveBtn">
+					<input type=button value="Twist extrude" onclick="CaptureToExtractSketch()"		id="twistBtn">
+					<br>
+
+					Transform Model:
+					<input type=button value="Rotate" onclick="TransformModel()" id="rotateBtn">
+					<input type=button value="Sclae" onclick="TransformModel()" id="scaleBtn">
+					<input type=button value="Dwell" onclick="TransformModel()" id="dwellBtn">
+					<input type=button value="Repeat" onclick="TransformModel()" id="patternAndRepeatBtn">
 				</form>
 
 				<div id="imgs">

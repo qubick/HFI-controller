@@ -94,7 +94,8 @@ http.createServer((req, res) => {
 
 	else if (parts[1] === "ctos") { //recieve msg from the remote user/ar-user app
 		var body = JSON.parse(decodeURIComponent(parts[3]));//, 'base64').toString('binary');
-		console.log(body.commands);
+		// console.log(body.commands);
+
 		printerBehavior = body.commands.msg;
 
 		if(body.channelId === "general"){
@@ -117,6 +118,7 @@ http.createServer((req, res) => {
 					});
 
 					//apply transformation matrix if there is any intervention for desgin
+					//this is for test
 					var transformType = "rotate";
 					transform.ApplyTransformation(transformType);
 				});
@@ -165,6 +167,24 @@ http.createServer((req, res) => {
 					RunShellCommands(cmd1, cmd2);
 				});
 			}
+
+
+			if(printerBehavior === "rotate"){
+				console.log('[Server]'.magenta, "rotate")
+
+			}
+			else if(printerBehavior === "scale") {
+				console.log('[Server]'.magenta, "scale")
+			}
+			else if(printerBehavior === "dwell") {
+				console.log('[Server]'.magenta, "dwell")
+
+			}
+			else if(printerBehavior === "patternAndRepeat") {
+				console.log('[Server]'.magenta, "define as pattern and repeat")
+
+			}
+
 		} // if channel's channel ID = general
 
 		Object.keys(clientQueues).forEach((otherClientId) => {
