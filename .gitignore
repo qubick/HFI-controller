@@ -9,3 +9,5 @@ npm-debug.log
 opencv*
 *emsdk*
 CuraEngine*
+output/
+assets/
