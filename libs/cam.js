@@ -179,7 +179,7 @@ function foregroundDetection(){
 } //EOF func foregroundDetection (foreground detection & thresholding)
 
 
-function captureToExtractSketch(){
+function CaptureToExtractSketch(){
   getExtrudeHeight();
 
   let clickedBtnID = window.event.target.id;

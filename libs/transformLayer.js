@@ -1,3 +1,4 @@
+var fs = require("fs");
 var parser = require('./parseGcode.js');
 // var CSG = require('../build/csg.js');
 var Victor = require('victor');
@@ -11,18 +12,27 @@ function ApplyTransformation(transformType){
 
   gcodeMvmt.forEach((line) => {
     // var tempVect = new CSG.Vector({x: line.x, y: line.y, z: line.z});
+    var vec = Victor.fromObject(line.pos); // pos : {x: , y: }
 
-    // var vec = new Victor(line.x, line.y);
-    var vec = Victor.fromObject(line.pos);
-    vec.rotateBy(Math.PI/4);
+    if(transformType === 'rotate'){
+      vec.rotateBy(Math.PI/4);
+    };
+    if(transformType === 'scale'){
 
-    var newLine = "G1 X" + vec.x + " Y" + vec.y + " E" + line.e;
-    console.log("curr temp vector: ", vec.toString());
+    };
+    if(transformType === 'sine'){
+
+    };
+
+    var newLine = 'G1 X' + vec.x + ' Y' + vec.y + ' Z'+ line.z + ' E' + line.e + '\n';
+    fs.appendFile('./assets/interpolatedPoints.gcode', newLine, (err)=>{
+      if(err) console.log(err);
+    });
+    console.log("curr temp vector: ", newLine);
+
   });
 
-  if(transformType === 'rotation');
-  if(transformType === 'scale');
-  if(transformType === 'sine');
+
 }
 
 module.exports = {
