@@ -87,6 +87,7 @@
     "serialport": "^6.0.5",
     "setprototypeof": "^1.1.0",
     "synchronize": "^2.0.0",
-    "utils-merge": "^1.0.1"
+    "utils-merge": "^1.0.1",
+    "victor": "^1.1.0"
   }
 }
