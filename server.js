@@ -43,7 +43,7 @@ app.listen(5555, () => {
 
 	// create connection with the 3D printer
 	port = new SerialPort('/dev/cu.usbmodem1411', {
-		baudRate: 57600
+		baudRate: 250000
 	});
 
 	//create connection with the leapMotion
@@ -218,6 +218,7 @@ http.createServer((req, res) => {
 async function SendCommand(){
 	console.log('[Server]'.magenta, "Will send gcode from line: ", currGcodeLineIdx);
 
+	//simple send; no transformation applied other than interpolation
 	var gcodesTo3DP = parser.gcodeSegments;
 
 	// fs.writeFile('interpolatedPoints.gcode', gcodesTo3DP.join(','));

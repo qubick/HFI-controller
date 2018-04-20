@@ -110,6 +110,7 @@ function foregroundDetection(){
 
     // show currently printing layer area
     cv.imshow('substResult1', imgFirst); // a 3D object currently being printed
+    cv.imshow('substResult2', imgSecnd);
 
     //thresholding of the foreground detected imgs to find difference
     cv.cvtColor(imgFirst, imgFirst, cv.COLOR_RGBA2GRAY, 0);
@@ -267,10 +268,13 @@ function ExtractSketchContextBased(){
       }
     }
   }
+  cv.imshow('substResult1', extractImg);
 
   cv.cvtColor(extractImg, extractImg, cv.COLOR_RGBA2GRAY, 0);
+  cv.imshow('substResult2', extractImg);
+
   cv.threshold(extractImg, extractImg, 120, 200, cv.THRESH_BINARY);
-  cv.imshow('substResult1', extractImg);
+  cv.imshow('substResult3', extractImg);
 
   let dest = cv.Mat.zeros(extractImg.cols, extractImg.rows, cv.CV_8UC3);
   let contours = new cv.MatVector();
@@ -287,6 +291,7 @@ function ExtractSketchContextBased(){
 
     cnt.delete(); tmp.delete();
   }
+  // cv.imshow('substResult4', poly);
 
   for (let i = 0; i < contours.size(); ++i) {
 
@@ -295,7 +300,7 @@ function ExtractSketchContextBased(){
     // cv.drawContours(dest, contours, i, color, 1, cv.LINE_8, hierarchy, 100); //normal contour
     cv.drawContours(dest, poly, i, color, 1, 8, hierarchy, 0); //polyline contour
   }
-  cv.imshow('substResult2', dest); //contour extraction result
+  cv.imshow('substResult5', dest); //contour extraction result
 
   if ((extrusionCnt > 1) || (clickedBtnID === 'holesBtn')){ //extrude excluding hole
 
@@ -319,11 +324,11 @@ function ExtractSketchContextBased(){
         translateScript = translateScript.replace(/e-4[0-9]+/g,'');
 
         for(let k=0; k<contourCnt; k+=2){
-          var x = contour.data32F[k] //- initialPoint.x;
-          var y = contour.data32F[k+1] //- initialPoint.y;
+          var x = contour.data32F[k] * 40 //- initialPoint.x;
+          var y = contour.data32F[k+1] * 40 //- initialPoint.y;
 
           var line = '[' + x + ',' + y + '],\n' //have to renew everytime
-          line = line.replace(/e-4[0-9]+/g,'');
+          line = line.replace(/e-4[0-9]+/g,''); // <<< this should not be simple dropping. Consider different decimals (ie. e-41 vs. e-42)
           scriptLine += line; //center
         } // EOF for k
         scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])'; //splice last ', & new line char'
@@ -362,7 +367,8 @@ function ExtractSketchContextBased(){
                         + largestPolyScript + ';\n'  //largest area for linear extrusion
                         + polygonHoleScripts  //smaller areas for creating holes
                         + extrudeScript1  + extrudeScript2
-                        + '\n return difference(a, integratedHoles).scale([40, 40,1]);}' //empirical scale
+                        // + '\n return difference(a, integratedHoles).scale([40, 40,1]);}' //empirical scale
+                        + '\n return difference(a, integratedHoles);}' //empirical scale
 
     // ***************************** Replace this after test succeed *****************************//
     // scriptLine = scripts.replace('polygon(', '').substring(0, scriptLine.length - 1);
@@ -402,8 +408,14 @@ function ExtractSketchContextBased(){
           var x = contour.data32F[k];
           var y = contour.data32F[k+1];
 
-          line = '[' + x + ',' + y + '],\n'
-          line = line.replace(/e-4[0-9]+/g,'');
+          // line = '[' + x + ',' + y + '],\n'
+          // if(line.match('e-43')){
+          //   line = line.replace(/e-4[0-9]+/g,'');
+          //   line = parseFloat(line) * 10;
+          // }
+          // else{
+          //   line = line.replace(/e-4[0-9]+/g,'');
+          // }
           scriptLine += line; //center
         } // EOF for k
         scriptLine = scriptLine.substring(0, scriptLine.length - 2) + '])';
