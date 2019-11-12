@@ -1,4 +1,4 @@
-# Reprap 3D printer controller for HFI in Javascript
+# Reprap 3D printer controller for HFI in JS
 
 ## To do
 - browserify main.js
