@@ -52,7 +52,7 @@
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
-    "electron": "^1.8.4",
+    "electron": "^15.5.5",
     "eslint": "^3.10.1",
     "eslint-config-mdcs": "^4.2.2",
     "google-closure-compiler": "^20160713.0.0",
